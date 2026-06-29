@@ -10,9 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@openbowl/shared": "workspace:*",
-    "@openbowl/types": "workspace:*",
-    "@openbowl/ui": "workspace:*",
     "@tanstack/react-query": "^5.25.0",
     "lucide-react": "^0.359.0",
     "react": "^18.2.0",
