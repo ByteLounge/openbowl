@@ -163,5 +163,49 @@ func (db *DB) migrate() error {
 	`
 
 	_, err := db.Conn.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Auto-seed default workspace if database is empty
+	var count int
+	err = db.Conn.QueryRow(`SELECT COUNT(*) FROM workspaces`).Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		log.Println("Seeding local database with default workspace details...")
+		wsID := "w-dev-default"
+		projID := "proj-core-default"
+
+		tx, err := db.Conn.Begin()
+		if err != nil {
+			return err
+		}
+		defer tx.Rollback()
+
+		_, _ = tx.Exec(`INSERT INTO workspaces (id, name) VALUES (?, ?)`, wsID, "Default Workspace")
+		_, _ = tx.Exec(`INSERT INTO projects (id, workspace_id, name, description) VALUES (?, ?, ?, ?)`,
+			projID, wsID, "OpenBowl Core", "Universal context layer development")
+
+		// Seed Tasks
+		_, _ = tx.Exec(`INSERT INTO tasks (id, project_id, title, description, status) VALUES (?, ?, ?, ?, ?)`,
+			"t-1", projID, "Scaffold Tauri desktop workspace", "Configured rust dependencies", "completed")
+		_, _ = tx.Exec(`INSERT INTO tasks (id, project_id, title, description, status) VALUES (?, ?, ?, ?, ?)`,
+			"t-2", projID, "Implement Go Provider SDK", "Unified adapter patterns", "completed")
+		_, _ = tx.Exec(`INSERT INTO tasks (id, project_id, title, description, status) VALUES (?, ?, ?, ?, ?)`,
+			"t-3", projID, "Integrate local SQLite tables", "Created database migration pipelines", "in_progress")
+
+		// Seed Decisions
+		_, _ = tx.Exec(`INSERT INTO memories (id, workspace_id, category, content, is_active) VALUES (?, ?, ?, ?, ?)`,
+			"m-1", wsID, "decision", "Use CGO-free modernc.org SQLite driver for portability.", 1)
+		_, _ = tx.Exec(`INSERT INTO memories (id, workspace_id, category, content, is_active) VALUES (?, ?, ?, ?, ?)`,
+			"m-2", wsID, "preference", "Prefer functional React style with custom Vanilla CSS.", 1)
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

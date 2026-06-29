@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Layers, 
   FolderGit2, 
@@ -12,56 +12,37 @@ import {
 import { approximateTokens, formatCost } from '../../../packages/shared/src/index';
 import { Provider, Message, Task, Memory } from '../../../packages/types/src/index';
 
-// Mock Initial Data
-const mockProviders: Provider[] = [
-  { id: 'p-1', workspaceId: 'w-1', name: 'Anthropic Claude', providerType: 'anthropic', isActive: true, createdAt: '' },
-  { id: 'p-2', workspaceId: 'w-1', name: 'Google Gemini', providerType: 'gemini', isActive: true, createdAt: '' },
-  { id: 'p-3', workspaceId: 'w-1', name: 'OpenAI GPT-4', providerType: 'openai', isActive: true, createdAt: '' },
-  { id: 'p-4', workspaceId: 'w-1', name: 'DeepSeek V3', providerType: 'deepseek', isActive: true, createdAt: '' }
-];
+const API_BASE = 'http://localhost:3010/api/v1';
+const WS_BASE = 'ws://localhost:3010/ws/chat';
 
-const mockTasks: Task[] = [
-  { id: 't-1', projectId: 'proj-1', title: 'Initialize OpenBowl Scaffold', status: 'completed', createdAt: '', updatedAt: '' },
-  { id: 't-2', projectId: 'proj-1', title: 'Implement Universal Provider SDK', status: 'in_progress', createdAt: '', updatedAt: '' },
-  { id: 't-3', projectId: 'proj-1', title: 'Build Context Aggregator Pipeline', status: 'todo', createdAt: '', updatedAt: '' }
-];
-
-const mockMemories: Memory[] = [
-  { id: 'm-1', workspaceId: 'w-1', category: 'decision', content: 'Use CGO-free modernc.org SQLite driver for cross-platform portability.', isActive: true, createdAt: '', updatedAt: '' },
-  { id: 'm-2', workspaceId: 'w-1', category: 'preference', content: 'Prefer functional style React components with modern CSS styling.', isActive: true, createdAt: '', updatedAt: '' }
+const initialProviders: Provider[] = [
+  { id: 'p-1', workspaceId: 'w-dev-default', name: 'Anthropic Claude', providerType: 'anthropic', isActive: true, createdAt: '' },
+  { id: 'p-2', workspaceId: 'w-dev-default', name: 'Google Gemini', providerType: 'gemini', isActive: true, createdAt: '' },
+  { id: 'p-3', workspaceId: 'w-dev-default', name: 'OpenAI GPT-4', providerType: 'openai', isActive: true, createdAt: '' },
+  { id: 'p-4', workspaceId: 'w-dev-default', name: 'DeepSeek V3', providerType: 'deepseek', isActive: true, createdAt: '' },
+  { id: 'p-5', workspaceId: 'w-dev-default', name: 'Ollama (Local)', providerType: 'ollama', apiUrl: 'http://localhost:11434', isActive: true, createdAt: '' }
 ];
 
 export default function App() {
-  const [activeProviderIndex, setActiveProviderIndex] = useState(0);
+  const [providers] = useState<Provider[]>(initialProviders);
+  const [activeProviderIndex, setActiveProviderIndex] = useState(4); // Default to Ollama Local
   const [inputText, setInputText] = useState('');
+  
+  // Real Local Database states
+  const [, setWorkspaces] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [memories, setMemories] = useState<Memory[]>([]);
+  
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('w-dev-default');
+  const [activeProjectId, setActiveProjectId] = useState<string>('proj-core-default');
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'msg-1',
       conversationId: 'c-1',
       role: 'system',
-      content: 'System: Injected OpenBowl workspace context and active decisions.',
-      tokensPrompt: 0,
-      tokensCompletion: 0,
-      cost: 0,
-      status: 'sent',
-      createdAt: ''
-    },
-    {
-      id: 'msg-2',
-      conversationId: 'c-1',
-      role: 'user',
-      content: 'Explain how OpenBowl maintains context when switching models.',
-      tokensPrompt: 0,
-      tokensCompletion: 0,
-      cost: 0,
-      status: 'sent',
-      createdAt: ''
-    },
-    {
-      id: 'msg-3',
-      conversationId: 'c-1',
-      role: 'assistant',
-      content: 'OpenBowl decouples memory and task tracking from LLM clients. When switching providers, the Context Engine formats the current file links, task board, and workspace decisions, presenting a compact, unified prompt context package to the newly selected provider.',
+      content: 'System: OpenBowl workspace memory initialized.',
       tokensPrompt: 0,
       tokensCompletion: 0,
       cost: 0,
@@ -69,23 +50,114 @@ export default function App() {
       createdAt: ''
     }
   ]);
+  
   const [websocketStatus, setWebsocketStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
-  const [costAccumulated, setCostAccumulated] = useState(0.00342);
+  const [costAccumulated, setCostAccumulated] = useState(0.0);
 
-  const activeProvider = mockProviders[activeProviderIndex];
+  const activeProvider = providers[activeProviderIndex];
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // Cycle providers simulation
-  const handleSwitchProvider = () => {
-    setActiveProviderIndex((prev) => (prev + 1) % mockProviders.length);
-  };
+  // Fetch workspaces and projects on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/workspaces`)
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        setWorkspaces(data);
+        if (data.length > 0) setActiveWorkspaceId(data[0].id);
+      })
+      .catch(() => {
+        // Fallback stub if sidecar offline
+        setWorkspaces([{ id: 'w-dev-default', name: 'Default Workspace' }]);
+      });
 
-  // Simulating connection to Go backend sidecar WebSocket
+    fetch(`${API_BASE}/projects`)
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        setProjects(data);
+        if (data.length > 0) setActiveProjectId(data[0].id);
+      })
+      .catch(() => {
+        setProjects([{ id: 'proj-core-default', workspace_id: 'w-dev-default', name: 'OpenBowl Core', description: 'Universal context layer' }]);
+      });
+  }, []);
+
+  // Fetch tasks and memories when project/workspace switches
+  useEffect(() => {
+    if (!activeProjectId) return;
+    fetch(`${API_BASE}/projects/${activeProjectId}/tasks`)
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => setTasks(data))
+      .catch(() => {
+        // Fallback
+        setTasks([
+          { id: 't-1', projectId: activeProjectId, title: 'Scaffold Tauri desktop workspace', status: 'completed', createdAt: '', updatedAt: '' },
+          { id: 't-2', projectId: activeProjectId, title: 'Implement Go Provider SDK', status: 'completed', createdAt: '', updatedAt: '' },
+          { id: 't-3', projectId: activeProjectId, title: 'Integrate local SQLite tables', status: 'in_progress', createdAt: '', updatedAt: '' }
+        ]);
+      });
+  }, [activeProjectId]);
+
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    fetch(`${API_BASE}/workspaces/${activeWorkspaceId}/memories`)
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => setMemories(data))
+      .catch(() => {
+        setMemories([
+          { id: 'm-1', workspaceId: activeWorkspaceId, category: 'decision', content: 'Use CGO-free modernc.org SQLite driver for portability.', isActive: true, createdAt: '', updatedAt: '' },
+          { id: 'm-2', workspaceId: activeWorkspaceId, category: 'preference', content: 'Prefer functional React style with custom Vanilla CSS.', isActive: true, createdAt: '', updatedAt: '' }
+        ]);
+      });
+  }, [activeWorkspaceId]);
+
+  // Connect to Go sidecar WebSocket
   useEffect(() => {
     setWebsocketStatus('connecting');
-    const ws = new WebSocket('ws://localhost:3010/ws/chat');
+    const ws = new WebSocket(WS_BASE);
+    wsRef.current = ws;
 
     ws.onopen = () => {
       setWebsocketStatus('connected');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.event === 'chat.chunk') {
+          const delta = msg.payload.text;
+          setMessages((prev) => prev.map((m) => {
+            if (m.status === 'pending') {
+              return { ...m, content: m.content + delta };
+            }
+            return m;
+          }));
+        } else if (msg.event === 'chat.complete') {
+          setMessages((prev) => prev.map((m) => {
+            if (m.status === 'pending') {
+              return { 
+                ...m, 
+                status: 'sent',
+                tokensPrompt: msg.payload.tokens_prompt || 0,
+                tokensCompletion: msg.payload.tokens_completion || 0,
+                cost: msg.payload.cost || 0.0
+              };
+            }
+            return m;
+          }));
+          if (msg.payload.cost) {
+            setCostAccumulated((prev) => prev + msg.payload.cost);
+          }
+        } else if (msg.event === 'chat.error') {
+          setMessages((prev) => prev.map((m) => {
+            if (m.status === 'pending') {
+              return { ...m, content: `Error: ${msg.payload.error}`, status: 'error' };
+            }
+            return m;
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to parse WebSocket message", err);
+      }
     };
 
     ws.onerror = () => {
@@ -100,6 +172,26 @@ export default function App() {
       ws.close();
     };
   }, []);
+
+  const handleSwitchProvider = () => {
+    setActiveProviderIndex((prev) => (prev + 1) % providers.length);
+  };
+
+  const handleToggleTask = (taskID: string, currentStatus: Task['status']) => {
+    const nextStatus: Task['status'] = currentStatus === 'completed' ? 'in_progress' : 'completed';
+    
+    // Optimistic UI update
+    setTasks(prev => prev.map(t => t.id === taskID ? { ...t, status: nextStatus } as Task : t));
+
+    fetch(`${API_BASE}/tasks/${taskID}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: nextStatus })
+    }).catch(() => {
+      // Revert if API failed
+      setTasks(prev => prev.map(t => t.id === taskID ? { ...t, status: currentStatus } as Task : t));
+    });
+  };
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
@@ -119,25 +211,51 @@ export default function App() {
     setMessages((prev) => [...prev, userMsg]);
     setInputText('');
 
-    // Dynamic cost simulation
-    setCostAccumulated((prev) => prev + 0.00018);
+    const assistantMsgId = `msg-a-${Date.now()}`;
+    const pendingMsg: Message = {
+      id: assistantMsgId,
+      conversationId: 'c-1',
+      role: 'assistant',
+      content: '',
+      tokensPrompt: 0,
+      tokensCompletion: 0,
+      cost: 0,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    setMessages((prev) => [...prev, pendingMsg]);
 
-    // Simulated Response
-    setTimeout(() => {
-      const responseText = `Received by OpenBowl orchestration layer using current provider: ${activeProvider.name}. The context remains secure and active.`;
-      const replyMsg: Message = {
-        id: `msg-r-${Date.now()}`,
-        conversationId: 'c-1',
-        role: 'assistant',
-        content: responseText,
-        tokensPrompt: 0,
-        tokensCompletion: approximateTokens(responseText),
-        cost: 0.00024,
-        status: 'sent',
-        createdAt: new Date().toISOString()
-      };
-      setMessages((prev) => [...prev, replyMsg]);
-    }, 800);
+    // If WebSocket is connected, stream the response from Go sidecar
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        event: 'chat.start',
+        payload: {
+          conversation_id: 'c-1',
+          provider_type: activeProvider.providerType,
+          model_name: activeProvider.providerType === 'gemini' ? 'gemini-1.5-flash' : (activeProvider.providerType === 'openai' ? 'gpt-4o' : 'llama3'),
+          prompt: inputText,
+          api_key: activeProvider.providerType === 'gemini' ? 'YOUR_GEMINI_KEY' : 'dev-key',
+          api_url: activeProvider.apiUrl || ''
+        }
+      }));
+    } else {
+      // Fallback offline mock response timeout
+      setTimeout(() => {
+        const responseText = `[Offline Mode] Echo from client wrapper using ${activeProvider.name}. Start Go core binary to enable live completion streams.`;
+        setMessages((prev) => prev.map(m => {
+          if (m.id === assistantMsgId) {
+            return {
+              ...m,
+              content: responseText,
+              status: 'sent',
+              tokensCompletion: approximateTokens(responseText)
+            };
+          }
+          return m;
+        }));
+        setCostAccumulated((prev) => prev + 0.00012);
+      }, 700);
+    }
   };
 
   return (
@@ -162,10 +280,25 @@ export default function App() {
               <Plus size={14} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', borderRadius: '6px', backgroundColor: 'var(--bg-tertiary)', fontSize: '13px', cursor: 'pointer' }}>
-                <FolderGit2 size={15} color="var(--accent-purple)" />
-                <span>OpenBowl Core</span>
-              </div>
+              {projects.map(p => (
+                <div 
+                  key={p.id}
+                  onClick={() => setActiveProjectId(p.id)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    padding: '8px', 
+                    borderRadius: '6px', 
+                    backgroundColor: activeProjectId === p.id ? 'var(--bg-tertiary)' : 'transparent', 
+                    fontSize: '13px', 
+                    cursor: 'pointer' 
+                  }}
+                >
+                  <FolderGit2 size={15} color="var(--accent-purple)" />
+                  <span>{p.name}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -173,9 +306,14 @@ export default function App() {
           <div style={{ marginBottom: '24px' }}>
             <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Tasks</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {mockTasks.map((t) => (
+              {tasks.map((t) => (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-                  <input type="checkbox" checked={t.status === 'completed'} readOnly style={{ accentColor: 'var(--accent-purple)' }} />
+                  <input 
+                    type="checkbox" 
+                    checked={t.status === 'completed'} 
+                    onChange={() => handleToggleTask(t.id, t.status)} 
+                    style={{ accentColor: 'var(--accent-purple)', cursor: 'pointer' }} 
+                  />
                   <span style={{ color: t.status === 'completed' ? 'var(--text-muted)' : 'var(--text-secondary)', textDecoration: t.status === 'completed' ? 'line-through' : 'none' }}>
                     {t.title}
                   </span>
@@ -188,7 +326,7 @@ export default function App() {
           <div>
             <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Extracted Decisions</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {mockMemories.map((m) => (
+              {memories.map((m) => (
                 <div key={m.id} style={{ padding: '8px', borderRadius: '6px', borderLeft: '2px solid var(--accent-purple)', backgroundColor: 'rgba(255,255,255,0.02)', fontSize: '11px', color: 'var(--text-secondary)' }}>
                   {m.content}
                 </div>
@@ -232,7 +370,7 @@ export default function App() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Database size={14} color="var(--status-success)" />
-              <span>Decisions: {mockMemories.length}</span>
+              <span>Decisions: {memories.length}</span>
             </div>
           </div>
         </header>
