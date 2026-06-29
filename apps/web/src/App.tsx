@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  Bot, 
   Layers, 
-  Settings, 
   FolderGit2, 
-  BookMarked, 
-  ListTodo, 
   Cpu, 
   Database,
   Send,
@@ -13,8 +9,8 @@ import {
   Globe,
   Plus
 } from 'lucide-react';
-import { approximateTokens, formatCost } from '@openbowl/shared';
-import { Provider, Message, Task, Memory } from '@openbowl/types';
+import { approximateTokens, formatCost } from '../../../packages/shared/src/index';
+import { Provider, Message, Task, Memory } from '../../../packages/types/src/index';
 
 // Mock Initial Data
 const mockProviders: Provider[] = [
@@ -162,7 +158,7 @@ export default function App() {
         <div style={{ flex: 1, padding: '16px', overflowY: 'auto' }}>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', tracking: '0.05em', color: 'var(--text-muted)' }}>Projects</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>Projects</span>
               <Plus size={14} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

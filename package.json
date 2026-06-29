@@ -4,15 +4,10 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+
   "scripts": {
-    "dev": "npm run dev --workspace=@openbowl/web",
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
+    "dev": "npm run dev --prefix apps/web",
+    "build": "npm run build --prefix apps/web",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,go}\""
   },
   "devDependencies": {
