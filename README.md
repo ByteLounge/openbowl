@@ -1,5 +1,8 @@
 # OpenBowl 🥣
 
+<img width="891" height="280" alt="openbowl-removebg-preview" src="https://github.com/user-attachments/assets/ef194ab1-3a14-4bff-860d-976f436a3024" />
+
+
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)](https://golang.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react)](https://react.dev/)
