@@ -126,6 +126,34 @@ func (s *MCPServer) handleListTools(id interface{}) {
 				Required: []string{"workspace_id"},
 			},
 		},
+		{
+			Name:        "list_workspace_tasks",
+			Description: "Retrieve the task board and checklist statuses for a given project.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]interface{}{
+					"project_id": map[string]interface{}{
+						"type":        "string",
+						"description": "The project UUID identifier.",
+					},
+				},
+				Required: []string{"project_id"},
+			},
+		},
+		{
+			Name:        "list_workspace_files",
+			Description: "Retrieve the files indexed by the workspace file watcher.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]interface{}{
+					"project_id": map[string]interface{}{
+						"type":        "string",
+						"description": "The project UUID identifier.",
+					},
+				},
+				Required: []string{"project_id"},
+			},
+		},
 	}
 
 	response := JSONRPCResponse{
@@ -148,6 +176,10 @@ func (s *MCPServer) handleCallTool(id interface{}, params json.RawMessage) {
 	switch callParams.Name {
 	case "list_workspace_memories":
 		s.executeListWorkspaceMemories(id, callParams.Arguments)
+	case "list_workspace_tasks":
+		s.executeListWorkspaceTasks(id, callParams.Arguments)
+	case "list_workspace_files":
+		s.executeListWorkspaceFiles(id, callParams.Arguments)
 	default:
 		s.sendError(id, -32602, fmt.Sprintf("Unknown tool: %s", callParams.Name))
 	}
@@ -197,6 +229,98 @@ func (s *MCPServer) executeListWorkspaceMemories(id interface{}, args json.RawMe
 		Result:  result,
 	}
 	s.sendResponse(response)
+}
+
+func (s *MCPServer) executeListWorkspaceTasks(id interface{}, args json.RawMessage) {
+	var params struct {
+		ProjectID string `json:"project_id"`
+	}
+
+	if err := json.Unmarshal(args, &params); err != nil {
+		s.sendError(id, -32602, "Invalid arguments format")
+		return
+	}
+
+	rows, err := s.DB.Conn.Query(`SELECT title, status FROM tasks WHERE project_id = ?`, params.ProjectID)
+	if err != nil {
+		s.sendError(id, 500, fmt.Sprintf("Query error: %v", err))
+		return
+	}
+	defer rows.Close()
+
+	var sb strings.Builder
+	count := 0
+	sb.WriteString("Workspace Task Board:\n")
+	for rows.Next() {
+		var title, status string
+		if err := rows.Scan(&title, &status); err == nil {
+			sb.WriteString(fmt.Sprintf("- [%s]: %s\n", status, title))
+			count++
+		}
+	}
+
+	if count == 0 {
+		sb.Reset()
+		sb.WriteString("No tasks recorded for this project.")
+	}
+
+	result := CallToolResult{
+		Content: []ToolContent{
+			{
+				Type: "text",
+				Text: sb.String(),
+			},
+		},
+	}
+	s.sendResponse(JSONRPCResponse{JSONRPC: "2.0", ID: id, Result: result})
+}
+
+func (s *MCPServer) executeListWorkspaceFiles(id interface{}, args json.RawMessage) {
+	var params struct {
+		ProjectID string `json:"project_id"`
+	}
+
+	if err := json.Unmarshal(args, &params); err != nil {
+		s.sendError(id, -32602, "Invalid arguments format")
+		return
+	}
+
+	rows, err := s.DB.Conn.Query(`SELECT relative_path, file_hash FROM file_references WHERE project_id = ?`, params.ProjectID)
+	if err != nil {
+		s.sendError(id, 500, fmt.Sprintf("Query error: %v", err))
+		return
+	}
+	defer rows.Close()
+
+	var sb strings.Builder
+	count := 0
+	sb.WriteString("Workspace File references:\n")
+	for rows.Next() {
+		var path, hash string
+		if err := rows.Scan(&path, &hash); err == nil {
+			sliceHash := hash
+			if len(hash) > 8 {
+				sliceHash = hash[:8]
+			}
+			sb.WriteString(fmt.Sprintf("- %s (Hash: %s)\n", path, sliceHash))
+			count++
+		}
+	}
+
+	if count == 0 {
+		sb.Reset()
+		sb.WriteString("No file references indexed for this project.")
+	}
+
+	result := CallToolResult{
+		Content: []ToolContent{
+			{
+				Type: "text",
+				Text: sb.String(),
+			},
+		},
+	}
+	s.sendResponse(JSONRPCResponse{JSONRPC: "2.0", ID: id, Result: result})
 }
 
 func (s *MCPServer) sendResponse(resp JSONRPCResponse) {
