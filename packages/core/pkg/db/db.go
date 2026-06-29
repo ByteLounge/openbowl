@@ -94,7 +94,7 @@ func (db *DB) migrate() error {
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-		FOREIGN KEY (provider_id) REFERENCES providers(id) ON SET NULL
+		FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL
 	);
 
 	CREATE TABLE IF NOT EXISTS messages (
@@ -134,8 +134,8 @@ func (db *DB) migrate() error {
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
-		FOREIGN KEY (source_conversation_id) REFERENCES conversations(id) ON SET NULL,
-		FOREIGN KEY (source_message_id) REFERENCES messages(id) ON SET NULL
+		FOREIGN KEY (source_conversation_id) REFERENCES conversations(id) ON DELETE SET NULL,
+		FOREIGN KEY (source_message_id) REFERENCES messages(id) ON DELETE SET NULL
 	);
 
 	CREATE TABLE IF NOT EXISTS file_references (
