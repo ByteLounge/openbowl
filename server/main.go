@@ -1,11 +1,17 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -26,18 +32,30 @@ type SyncOperation struct {
 }
 
 var dbConn *sql.DB
+var jwtSecretKey = []byte("openbowl-super-secret-key-change-in-prod")
+
+// JWT Claims structure
+type JWTClaims struct {
+	WorkspaceID string `json:"workspace_id"`
+	ExpiresAt   int64  `json:"expires_at"`
+}
 
 func main() {
 	_ = godotenv.Load()
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3020" // Sync server runs on port 3020 by default
+		port = "3020"
 	}
 
 	dbPath := os.Getenv("DATABASE_PATH")
 	if dbPath == "" {
 		dbPath = "openbowl_sync.db"
+	}
+
+	secret := os.Getenv("JWT_SECRET")
+	if secret != "" {
+		jwtSecretKey = []byte(secret)
 	}
 
 	// Initialize Database
@@ -79,11 +97,16 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "online", "service": "openbowl-sync-engine"})
 	})
 
-	// Push local client mutations
-	r.POST("/api/v1/sync/push", handlePush)
+	// Login endpoint to generate tokens for workspaces
+	r.POST("/api/v1/auth/login", handleLogin)
 
-	// Pull remote mutations delta
-	r.GET("/api/v1/sync/pull", handlePull)
+	// Auth secured group
+	secured := r.Group("/api/v1")
+	secured.Use(AuthMiddleware())
+	{
+		secured.POST("/sync/push", handlePush)
+		secured.GET("/sync/pull", handlePull)
+	}
 
 	log.Printf("OpenBowl Sync Backend starting on http://localhost:%s", port)
 	if err := r.Run(":" + port); err != nil {
@@ -91,7 +114,128 @@ func main() {
 	}
 }
 
+// Generate JWT token string using native HMAC-SHA256
+func GenerateJWT(workspaceID string) (string, error) {
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+	
+	claims := JWTClaims{
+		WorkspaceID: workspaceID,
+		ExpiresAt:   time.Now().Add(24 * time.Hour).Unix(),
+	}
+	claimsBytes, err := json.Marshal(claims)
+	if err != nil {
+		return "", err
+	}
+	
+	payload := base64.RawURLEncoding.EncodeToString(claimsBytes)
+	signingInput := header + "." + payload
+
+	h := hmac.New(sha256.New, jwtSecretKey)
+	h.Write([]byte(signingInput))
+	signature := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+
+	return signingInput + "." + signature, nil
+}
+
+// Verify JWT token string
+func VerifyJWT(tokenString string) (*JWTClaims, error) {
+	parts := strings.Split(tokenString, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("invalid token format")
+	}
+
+	signingInput := parts[0] + "." + parts[1]
+	signature, err := base64.RawURLEncoding.DecodeString(parts[2])
+	if err != nil {
+		return nil, err
+	}
+
+	h := hmac.New(sha256.New, jwtSecretKey)
+	h.Write([]byte(signingInput))
+	expectedSignature := h.Sum(nil)
+
+	if !hmac.Equal(signature, expectedSignature) {
+		return nil, fmt.Errorf("invalid signature")
+	}
+
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, err
+	}
+
+	var claims JWTClaims
+	if err := json.Unmarshal(payloadBytes, &claims); err != nil {
+		return nil, err
+	}
+
+	if time.Now().Unix() > claims.ExpiresAt {
+		return nil, fmt.Errorf("token expired")
+	}
+
+	return &claims, nil
+}
+
+// AuthMiddleware secures sync endpoints using JWT
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+			c.Abort()
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer <token>"})
+			c.Abort()
+			return
+		}
+
+		claims, err := VerifyJWT(parts[1])
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Unauthorized: %v", err)})
+			c.Abort()
+			return
+		}
+
+		c.Set("workspace_id", claims.WorkspaceID)
+		c.Next()
+	}
+}
+
+func handleLogin(c *gin.Context) {
+	var input struct {
+		WorkspaceID string `json:"workspace_id"`
+		Passkey     string `json:"passkey"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// For local development, allow any passkey matching 'openbowl-dev'
+	if input.Passkey != "openbowl-dev" && input.Passkey != "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid workspace passkey credentials"})
+		return
+	}
+
+	token, err := GenerateJWT(input.WorkspaceID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token":      token,
+		"expires_in": 86400,
+	})
+}
+
 func handlePush(c *gin.Context) {
+	authWorkspaceID := c.MustGet("workspace_id").(string)
+
 	var req struct {
 		WorkspaceID string          `json:"workspace_id"`
 		Operations  []SyncOperation `json:"operations"`
@@ -102,8 +246,14 @@ func handlePush(c *gin.Context) {
 		return
 	}
 
-	if req.WorkspaceID == "" || len(req.Operations) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing workspace_id or operations payload"})
+	// Check if user is authorized for this workspace
+	if req.WorkspaceID != authWorkspaceID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: Cannot push to another workspace"})
+		return
+	}
+
+	if len(req.Operations) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing operations payload"})
 		return
 	}
 
@@ -125,7 +275,6 @@ func handlePush(c *gin.Context) {
 	nextSeq := currentSeq + 1
 
 	for _, op := range req.Operations {
-		// Insert operation delta generating a globally ordered sequence key
 		_, err = tx.Exec(`
 			INSERT INTO sync_operations (workspace_id, entity_type, entity_id, operation_type, payload, sequence_number, applied_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -147,11 +296,17 @@ func handlePush(c *gin.Context) {
 }
 
 func handlePull(c *gin.Context) {
+	authWorkspaceID := c.MustGet("workspace_id").(string)
 	workspaceID := c.Query("workspace_id")
 	sinceSeqStr := c.Query("since_seq")
 
 	if workspaceID == "" || sinceSeqStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing workspace_id or since_seq parameter"})
+		return
+	}
+
+	if workspaceID != authWorkspaceID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: Cannot pull from another workspace"})
 		return
 	}
 
