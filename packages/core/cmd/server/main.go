@@ -16,6 +16,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/openbowl/openbowl/packages/core/pkg/db"
 	"github.com/openbowl/openbowl/packages/core/pkg/provider"
+	"github.com/openbowl/openbowl/packages/core/pkg/watcher"
 )
 
 var upgrader = websocket.Upgrader{
@@ -57,6 +58,19 @@ func main() {
 		log.Fatalf("Fatal: Database setup failed: %v", err)
 	}
 	defer database.Close()
+
+	// Start File Watcher on active workspace
+	workspaceDir := os.Getenv("WORKSPACE_DIR")
+	if workspaceDir == "" {
+		workspaceDir = "."
+	}
+	fw, err := watcher.NewFileWatcher(database, "proj-core-default", workspaceDir)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize file watcher: %v", err)
+	} else {
+		fw.Start()
+		defer fw.Stop()
+	}
 
 	// Initialize Gin Router
 	r := gin.Default()
