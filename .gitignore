@@ -1,0 +1,64 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+.pnpm-store/
+jspm_packages/
+web_modules/
+
+# Build Outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.docusaurus/
+target/
+bin/
+
+# Local Backend Executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+packages/core/bin/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Tauri local configurations
+src-tauri/target/
+src-tauri/binaries/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+openbowl.db
+openbowl.db-journal
+openbowl.db-wal
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+.playwright/
+junit.xml
