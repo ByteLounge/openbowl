@@ -21,6 +21,8 @@
   <a href="#github-issues"><img src="https://img.shields.io/github/issues/openbowl/openbowl?style=flat-square&logo=github&color=EF4444" alt="GitHub Issues"/></a>
   <a href="#prs-welcome"><img src="https://img.shields.io/badge/PRs-welcome-purple?style=flat-square&logo=gitkraken" alt="PRs Welcome"/></a>
   <a href="#model-context-protocol-mcp"><img src="https://img.shields.io/badge/MCP-Supported-blue?style=flat-square&logo=modelcontextprotocol" alt="MCP Supported"/></a>
+  <a href="#roadmap"><img src="https://img.shields.io/badge/Vectors-Supported-orange?style=flat-square&logo=sqlite" alt="Vectors Supported"/></a>
+  <a href="https://discord.gg/openbowl"><img src="https://img.shields.io/badge/Discord-Community-7289DA?style=flat-square&logo=discord&logoColor=white" alt="Discord Community"/></a>
   <a href="#build-status"><img src="https://img.shields.io/github/actions/workflow/status/openbowl/openbowl/ci.yml?style=flat-square&logo=githubactions&logoColor=white" alt="Build Status"/></a>
 </p>
 
@@ -241,6 +243,12 @@ _The web client launches on `http://localhost:3000`._
 3. **Switch Providers**: When switching tabs, click the floating **🥣 Inject Context** button on the page. Your active goals, architectural rules, and recent dialogue turns are instantly injected into the prompt box.
 4. **Continue Chatting**: Press send, and continue the conversation seamlessly!
 
+### ⌨️ Keyboard Shortcuts (Roadmap)
+
+- **`Alt + C`**: Force sync conversation turn manually.
+- **`Alt + I`**: Inject Context into prompt textarea immediately.
+- **`Ctrl + Shift + P`**: Open OpenBowl Command Palette settings.
+
 ---
 
 ## 🔌 Model Context Protocol (MCP)
@@ -306,10 +314,18 @@ We welcome contributions of all sizes! To maintain codebase quality:
 - **RFCs & Feature Requests**: Open an issue to discuss design proposals before writing code.
 - **Development Flow**: Read the **[Contributor Guide](file:///D:/Projects/OpenBowl/docs/CONTRIBUTING.md)** for branch naming formats, TypeScript rules, and code standards.
 
+### Contributors
+
+<a href="https://github.com/openbowl/openbowl/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=openbowl/openbowl" alt="Contributors Grid"/>
+</a>
+
 ---
 
 ## 📑 Documentation
 
+- 📄 **[CONTEXT_ENGINE.md](file:///D:/Projects/OpenBowl/docs/CONTEXT_ENGINE.md)**: Context engine mechanics & sliding window compaction.
+- 📄 **[openapi.yaml](file:///D:/Projects/OpenBowl/docs/openapi.yaml)**: OpenAPI/Swagger specification of local REST endpoints.
 - 📄 **[ARCHITECTURE.md](file:///D:/Projects/OpenBowl/docs/ARCHITECTURE.md)**: System design and Tauri integration.
 - 📄 **[API_DESIGN.md](file:///D:/Projects/OpenBowl/docs/API_DESIGN.md)**: REST interfaces and WebSocket event payloads.
 - 📄 **[DATA_MODEL.md](file:///D:/Projects/OpenBowl/docs/DATA_MODEL.md)**: Database schemas and indexing strategy.

@@ -1,0 +1,188 @@
+openapi: 3.0.3
+info:
+  title: OpenBowl Core Sidecar API
+  description: REST API specification for OpenBowl's local developer sidecar service running on `http://localhost:3010`.
+  version: 0.1.0
+servers:
+  - url: http://localhost:3010/api/v1
+    description: Local sidecar server
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Returns the status and environment metadata of the Go backend sidecar.
+      responses:
+        '200':
+          description: Server is healthy and running.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                    example: 0.1.0
+                  environment:
+                    type: string
+                    example: development
+
+  /workspaces:
+    get:
+      summary: Get Workspaces
+      description: Returns all workspaces in the local SQLite database.
+      responses:
+        '200':
+          description: A list of workspaces.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: w-20260630
+                    name:
+                      type: string
+                      example: ByteLounge Core
+    post:
+      summary: Create Workspace
+      description: Adds a new workspace to the SQLite database.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                id:
+                  type: string
+                  example: w-20260630
+                name:
+                  type: string
+                  example: ByteLounge Core
+      responses:
+        '200':
+          description: Workspace created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: created
+                  id:
+                    type: string
+                    example: w-20260630
+
+  /projects:
+    get:
+      summary: Get Projects
+      description: Returns projects, optionally filtered by workspace_id.
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of projects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: proj-core-default
+                    workspace_id:
+                      type: string
+                      example: w-20260630
+                    name:
+                      type: string
+                      example: OpenBowl Core
+                    description:
+                      type: string
+                      example: Main repository workspace
+
+  /projects/{id}/context:
+    get:
+      summary: Get Compiled Context
+      description: Compiles workspace rules, active tasks, and recent conversation turns into a unified markdown prompt payload.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Compiled markdown context block.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project_id:
+                    type: string
+                    example: proj-core-default
+                  context_text:
+                    type: string
+                    example: "=== OPENBOWL CONTEXT INJECTION ===\nActive decisions...\n"
+
+  /conversations/sync:
+    post:
+      summary: Synchronize Conversation History
+      description: Syncs active browser user/assistant turns to the local SQLite database.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - project_id
+                - messages
+              properties:
+                project_id:
+                  type: string
+                  example: proj-core-default
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - role
+                      - content
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                        example: user
+                      content:
+                        type: string
+                        example: what is the weather in Pune?
+      responses:
+        '200':
+          description: Sync completed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: synchronized
+                  message_count:
+                    type: integer
+                    example: 2
