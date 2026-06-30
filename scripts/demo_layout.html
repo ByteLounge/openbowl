@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OpenBowl Demo Transition Layout</title>
+  <style>
+    :root {
+      --bg-dark: #0a0a0c;
+      --panel-dark: #121215;
+      --border-subtle: #222228;
+      --text-main: #f4f4f6;
+      --text-muted: #71717a;
+      --purple: #8b5cf6;
+      --red: #ef4444;
+      --green: #10b981;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      margin-bottom: 24px;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--purple);
+    }
+
+    .container {
+      display: flex;
+      width: 1000px;
+      height: 500px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--panel-dark);
+      position: relative;
+    }
+
+    .pane:first-child {
+      border-right: 1px solid var(--border-subtle);
+    }
+
+    .header-bar {
+      height: 48px;
+      background-color: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .chat-area {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 80%;
+    }
+
+    .user {
+      background-color: var(--purple);
+      color: white;
+      align-self: flex-end;
+    }
+
+    .assistant {
+      background-color: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      align-self: flex-start;
+    }
+
+    .alert-box {
+      background-color: rgba(239, 68, 68, 0.08);
+      border: 1px solid var(--red);
+      color: var(--red);
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      text-align: center;
+      margin-top: auto;
+    }
+
+    .input-wrapper {
+      padding: 16px;
+      border-top: 1px solid var(--border-subtle);
+      background-color: rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .prompt-box {
+      width: 100%;
+      height: 120px;
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-family: monospace;
+      font-size: 11px;
+      padding: 12px;
+      box-sizing: border-box;
+      resize: none;
+      outline: none;
+    }
+
+    .floating-btn {
+      position: absolute;
+      right: 28px;
+      top: -20px;
+      background: linear-gradient(135deg, var(--purple) 0%, #6d28d9 100%);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+      animation: float 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-4px); }
+    }
+
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--green);
+      background-color: rgba(16, 185, 129, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2>OpenBowl Context Transfer Simulation 🥣</h2>
+  <div class="container">
+    <!-- Left Pane: Claude (Exhausted) -->
+    <div class="pane">
+      <div class="header-bar">
+        <span>Claude.ai (Project Space)</span>
+        <span class="sync-badge">● Auto-Synced</span>
+      </div>
+      <div class="chat-area">
+        <div class="bubble user">Next, let's implement the DB transaction outbox sync.</div>
+        <div class="bubble assistant">Sure! To maintain consistent chronological logs, we'll store mutation sequence numbers in the local SQLite WAL engine...</div>
+        <div class="alert-box">
+          ⚠️ You have reached your message limit. Continue conversation in another workspace or switch models.
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Pane: ChatGPT (Injected) -->
+    <div class="pane">
+      <div class="header-bar">
+        <span>ChatGPT.com (New Tab)</span>
+      </div>
+      <div class="chat-area" style="justify-content: flex-end;">
+        <div class="bubble assistant" style="max-width: 90%;">OpenBowl local context compiled. Ready to continue!</div>
+      </div>
+      <div class="input-wrapper">
+        <div class="floating-btn">🥣 Inject Context</div>
+        <textarea class="prompt-box" readonly>=== OPENBOWL CONTEXT INJECTION (Project: OpenBowl Core) ===
+- [decision]: Use CGO-free modernc.org SQLite driver.
+- [preference]: Prefer functional React with custom CSS.
+
+Active Workspace Tasks:
+- [x] Implement Go Provider SDK
+- [x] Multi-Device Cloud Syncing (CRDT outbox merges)
+
+Dialogue Turns (Last 2 exchanges):
+User: Next, let's implement the DB transaction outbox sync.
+Assistant: Sure! To maintain consistent chronological logs...
+
+Query: </textarea>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

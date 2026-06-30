@@ -92,6 +92,24 @@ async function run() {
       });
       console.log("Context Viewer screenshot saved successfully!");
     }
+
+    // 4. Screenshot Demo Transition Layout HTML
+    console.log("Navigating to Demo Transition Layout file...");
+    const demoFilePath =
+      "file:///" +
+      path.join(rootDir, "scripts/demo_layout.html").replace(/\\/g, "/");
+
+    await page.setViewportSize({ width: 1040, height: 640 });
+    await page.goto(demoFilePath, { waitUntil: "load" });
+    await page.waitForTimeout(1000);
+
+    console.log("Capturing Demo Transition screenshot...");
+    await page.screenshot({
+      path: path.join(imagesDir, "demo_transition.jpg"),
+      type: "jpeg",
+      quality: 95,
+    });
+    console.log("Demo Transition screenshot saved successfully!");
   } catch (error) {
     console.error("Error during screenshot capture:", error);
   } finally {
