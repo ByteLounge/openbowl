@@ -44,7 +44,7 @@
 
 ## 📺 Demo
 
-![Claude-to-ChatGPT Context Transition Demo Visual Walkthrough](docs/images/demo_transition.jpg)
+![Claude-to-ChatGPT Context Transition Demo Visual Walkthrough](docs/images/demo.gif)
 
 ---
 
