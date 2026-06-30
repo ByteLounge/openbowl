@@ -20,6 +20,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/openbowl/openbowl?style=flat-square&logo=opensourceinitiative&color=3B82F6" alt="License"/></a>
   <a href="#github-issues"><img src="https://img.shields.io/github/issues/openbowl/openbowl?style=flat-square&logo=github&color=EF4444" alt="GitHub Issues"/></a>
   <a href="#prs-welcome"><img src="https://img.shields.io/badge/PRs-welcome-purple?style=flat-square&logo=gitkraken" alt="PRs Welcome"/></a>
+  <a href="#model-context-protocol-mcp"><img src="https://img.shields.io/badge/MCP-Supported-blue?style=flat-square&logo=modelcontextprotocol" alt="MCP Supported"/></a>
   <a href="#build-status"><img src="https://img.shields.io/github/actions/workflow/status/openbowl/openbowl/ci.yml?style=flat-square&logo=githubactions&logoColor=white" alt="Build Status"/></a>
 </p>
 
@@ -62,6 +63,31 @@ OpenBowl acts as the **universal context layer** beneath your browsers and IDEs.
 - It runs locally and **privately** on your computer.
 - It captures your conversation turns **automatically** as you chat.
 - When you switch models, it doesn't dump the whole chat log. Instead, it injects a **dense prompt package** containing your active tasks, architectural decisions, and only the **last 3 turns** of your conversation.
+
+---
+
+## 📊 Feature Comparison & Compatibility
+
+### Feature Comparison
+
+| Feature                    |        OpenBowl 🥣         |  ChatGPT Plus Memory  |   Raw Chat Exports   |
+| :------------------------- | :------------------------: | :-------------------: | :------------------: |
+| **Multi-Provider Sync**    |          **Yes**           |   No (OpenAI only)    |   No (Static logs)   |
+| **Auto Background Sync**   | **Yes** (MutationObserver) |          Yes          | No (Manual download) |
+| **Sliding Window Buffer**  | **Yes** (Last 6 messages)  | No (Exhausts context) |          No          |
+| **Local-First & Private**  |  **Yes** (WAL SQLite DB)   |   No (OpenAI Cloud)   |   Yes (JSON files)   |
+| **Workspace File Watcher** |          **Yes**           |          No           |          No          |
+| **IDE Integration (MCP)**  |  **Yes** (Cursor/VS Code)  |          No           |          No          |
+
+### Browser Compatibility
+
+| Browser           | ChatGPT (`chatgpt.com`) | Claude (`claude.ai`) |          Input Box Selectors           | Status      |
+| :---------------- | :---------------------: | :------------------: | :------------------------------------: | :---------- |
+| **Google Chrome** |           Yes           |         Yes          | `#prompt-textarea` / `contenteditable` | **Stable**  |
+| **Brave**         |           Yes           |         Yes          | `#prompt-textarea` / `contenteditable` | **Stable**  |
+| **Arc**           |           Yes           |         Yes          | `#prompt-textarea` / `contenteditable` | **Stable**  |
+| **Firefox**       |         Planned         |       Planned        |                   -                    | **Roadmap** |
+| **Safari**        |         Planned         |       Planned        |                   -                    | **Roadmap** |
 
 ---
 
