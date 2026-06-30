@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/openbowl/openbowl/packages/core/pkg/db"
+	"github.com/openbowl/openbowl/packages/core/pkg/mcp"
 	"github.com/openbowl/openbowl/packages/core/pkg/provider"
 	"github.com/openbowl/openbowl/packages/core/pkg/watcher"
 )
@@ -59,6 +60,24 @@ func main() {
 		log.Fatalf("Fatal: Database setup failed: %v", err)
 	}
 	defer database.Close()
+
+	// Check if --mcp flag is passed to run in stdio protocol mode
+	runMCP := false
+	for _, arg := range os.Args {
+		if arg == "--mcp" {
+			runMCP = true
+			break
+		}
+	}
+
+	if runMCP {
+		// Redirect standard logger to stderr to prevent corrupting stdio JSON-RPC on stdout
+		log.SetOutput(os.Stderr)
+
+		server := mcp.NewMCPServer(database, os.Stdout)
+		server.Start(os.Stdin)
+		return
+	}
 
 	// Start File Watcher on active workspace
 	workspaceDir := os.Getenv("WORKSPACE_DIR")
