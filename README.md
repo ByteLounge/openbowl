@@ -269,9 +269,7 @@ OpenBowl implements a native **MCP JSON-RPC 2.0 stdio server** that allows IDEs 
 
 ### Dashboard
 
-<!-- Screenshot -->
-
-_Screenshot placeholder — Web app dashboard coming soon!_
+![OpenBowl Webapp Dashboard](docs/images/webapp_dashboard.jpg)
 
 ### Browser Extension
 
