@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -270,6 +271,63 @@ func main() {
 				}
 			}
 			c.JSON(http.StatusOK, memories)
+		})
+
+		// GET Compiled Context for browser extensions
+		api.GET("/projects/:id/context", func(c *gin.Context) {
+			projID := c.Param("id")
+
+			var projName, wsID string
+			err := database.Conn.QueryRow(`SELECT name, workspace_id FROM projects WHERE id = ?`, projID).Scan(&projName, &wsID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+
+			rows, err := database.Conn.Query(`SELECT title, status FROM tasks WHERE project_id = ?`, projID)
+			var tasksStr strings.Builder
+			if err == nil {
+				defer rows.Close()
+				for rows.Next() {
+					var title, status string
+					if err := rows.Scan(&title, &status); err == nil {
+						tasksStr.WriteString(fmt.Sprintf("- [%s] %s\n", status, title))
+					}
+				}
+			}
+
+			mRows, err := database.Conn.Query(`SELECT category, content FROM memories WHERE workspace_id = ? AND is_active = 1`, wsID)
+			var memStr strings.Builder
+			if err == nil {
+				defer mRows.Close()
+				for mRows.Next() {
+					var cat, content string
+					if err := mRows.Scan(&cat, &content); err == nil {
+						memStr.WriteString(fmt.Sprintf("- [%s]: %s\n", cat, content))
+					}
+				}
+			}
+
+			var promptPkg strings.Builder
+			promptPkg.WriteString(fmt.Sprintf("=== OPENBOWL CONTEXT INJECTION (Project: %s) ===\n", projName))
+			promptPkg.WriteString("Active decisions & preferences:\n")
+			if memStr.Len() > 0 {
+				promptPkg.WriteString(memStr.String())
+			} else {
+				promptPkg.WriteString("- None\n")
+			}
+			promptPkg.WriteString("\nProject task roadmap:\n")
+			if tasksStr.Len() > 0 {
+				promptPkg.WriteString(tasksStr.String())
+			} else {
+				promptPkg.WriteString("- None\n")
+			}
+			promptPkg.WriteString("================================================\n")
+
+			c.JSON(http.StatusOK, gin.H{
+				"project_id":   projID,
+				"context_text": promptPkg.String(),
+			})
 		})
 	}
 
