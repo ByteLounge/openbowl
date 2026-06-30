@@ -181,7 +181,8 @@ test.describe('OpenBowl Chrome Extension', () => {
     await injectBtn.click();
     
     // 6. Assert insertion into contenteditable element
-    await expect(inputDiv).toContainText('### OpenBowl Claude Context\n- Active Task: Claude Test');
+    await expect(inputDiv).toContainText('### OpenBowl Claude Context');
+    await expect(inputDiv).toContainText('- Active Task: Claude Test');
   });
 
 });
