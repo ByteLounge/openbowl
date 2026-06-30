@@ -13,8 +13,7 @@
                                                                                                                                                    
   4. GitHub Web Store Release: Publish the browser extension to the Chrome Web Store and Firefox Add-ons site, adding "Install for Chrome" and     
   "Install for Firefox" badges.                                                                                                                    
-  5. Cross-Platform Installers: Use GitHub Actions to compile Go binaries and bundle them as native installers (using Tauri) for Windows ( .msi ), 
-  macOS ( .dmg ), and Linux ( .deb ).                                                                                                              
+  5. [x] ~~Cross-Platform Installers: Configure .github/workflows/release.yml to compile Go sidecar targets and package native desktop installers (.msi, .dmg, .deb) via Tauri's GitHub Actions bundle workflow.~~
   6. [x] ~~Docker Self-Hosting: Include a clean  docker-compose.yml  to allow developers to run the OpenBowl Sidecar and Web Dashboard with a single  docker compose up  command.~~
                                                                                                                                                    
   #### 3. Community & Developer Relations (DevRel)                                                                                                 
