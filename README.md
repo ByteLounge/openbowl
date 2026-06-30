@@ -1,7 +1,7 @@
 # OpenBowl 🥣
 
 <p align="center">
-  <img width="891" height="280" alt="openbowl-banner" src="https://github.com/user-attachments/assets/ef194ab1-3a14-4bff-860d-976f436a3024" />
+  <img width="600" alt="openbowl-logo" src="docs/images/logo.svg" />
 </p>
 
 <p align="center">
