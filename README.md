@@ -44,11 +44,7 @@
 
 ## 📺 Demo
 
-<!-- Demo GIF -->
-<!-- Demo Video -->
-<!-- Screenshot -->
-
-_Demo media placeholder — Visual walkthrough coming soon!_
+![Claude-to-ChatGPT Context Transition Demo Visual Walkthrough](docs/images/demo_transition.jpg)
 
 ---
 

@@ -4,8 +4,7 @@
                                                                                                                                                    
   #### 1. Developer Onboarding & Demos                                                                                                             
                                                                                                                                                    
-  1. Interactive Demo GIF/Video: Record and embed a high-quality 30-second loop showing a Claude context exhaust, clicking the "Inject Context"    
-  button, and ChatGPT instantly resuming the chat.                                                                                                 
+  1. [x] ~~Interactive Demo Visual Walkthrough: Design a side-by-side transition graphic showing a Claude context exhaust, "Inject Context" trigger, and ChatGPT resuming prompt states, embedded in the README.~~
   2. [x] ~~Gitpod / GitHub Codespaces Support: Add a "Open in GitHub Codespaces" badge with a configured  .devcontainer  directory to let developers spin up the Go sidecar and React UI in one click.~~
   3. [x] ~~Interactive Code Tour: Add a  .tour  file using the VS Code CodeTour standard to walk new contributors through the Go codebase and extension structure step-by-step.~~
                                                                                                                                                    
