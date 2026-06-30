@@ -324,10 +324,111 @@ func main() {
 			}
 			promptPkg.WriteString("================================================\n")
 
+			// Fetch recent conversation history synced from browser extensions
+			convID := "c-browser-sync-" + projID
+			var exists bool
+			err = database.Conn.QueryRow(`SELECT EXISTS(SELECT 1 FROM conversations WHERE id = ?)`, convID).Scan(&exists)
+			if err == nil && exists {
+				mRows, err := database.Conn.Query(`SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY id ASC`, convID)
+				if err == nil {
+					defer mRows.Close()
+					var historyStr strings.Builder
+					for mRows.Next() {
+						var role, content string
+						if err := mRows.Scan(&role, &content); err == nil {
+							displayRole := strings.ToUpper(role[:1]) + role[1:]
+							historyStr.WriteString(fmt.Sprintf("%s: %s\n\n", displayRole, content))
+						}
+					}
+					if historyStr.Len() > 0 {
+						promptPkg.WriteString("\n=== RECENT CONVERSATION HISTORY (Continued from another provider) ===\n")
+						promptPkg.WriteString(historyStr.String())
+						promptPkg.WriteString("====================================================================\n")
+					}
+				}
+			}
+
 			c.JSON(http.StatusOK, gin.H{
 				"project_id":   projID,
 				"context_text": promptPkg.String(),
 			})
+		})
+
+		// POST Sync Conversation History from browsers
+		api.POST("/conversations/sync", func(c *gin.Context) {
+			var input struct {
+				ProjectID string `json:"project_id"`
+				Messages  []struct {
+					Role    string `json:"role"`
+					Content string `json:"content"`
+				} `json:"messages"`
+			}
+
+			if err := c.ShouldBindJSON(&input); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			if input.ProjectID == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "project_id is required"})
+				return
+			}
+
+			convID := "c-browser-sync-" + input.ProjectID
+
+			// 1. Ensure conversation entry exists in local database
+			_, err := database.Conn.Exec(`
+				INSERT INTO conversations (id, project_id, title)
+				VALUES (?, ?, ?)
+				ON CONFLICT(id) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+			`, convID, input.ProjectID, "Browser Synced Conversation")
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create/update conversation entry: " + err.Error()})
+				return
+			}
+
+			// 2. Clear old messages for this synced conversation
+			_, err = database.Conn.Exec(`DELETE FROM messages WHERE conversation_id = ?`, convID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clear old message references: " + err.Error()})
+				return
+			}
+
+			// 3. Insert new messages inside a secure transaction block
+			tx, err := database.Conn.Begin()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open database transaction: " + err.Error()})
+				return
+			}
+			defer tx.Rollback()
+
+			stmt, err := tx.Prepare(`
+				INSERT INTO messages (id, conversation_id, role, content, status)
+				VALUES (?, ?, ?, ?, 'sent')
+			`)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to prepare insert command: " + err.Error()})
+				return
+			}
+			defer stmt.Close()
+
+			for i, msg := range input.Messages {
+				// Use zero-padded index to sort chronologically by string ID
+				msgID := fmt.Sprintf("m-browser-sync-%s-%05d", input.ProjectID, i)
+				_, err = stmt.Exec(msgID, convID, msg.Role, msg.Content)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert message sequence: " + err.Error()})
+					return
+				}
+			}
+
+			err = tx.Commit()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit sequence insertion: " + err.Error()})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"status": "synchronized", "message_count": len(input.Messages)})
 		})
 	}
 

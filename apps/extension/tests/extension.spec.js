@@ -108,6 +108,15 @@ test.describe('OpenBowl Chrome Extension', () => {
         `,
       });
     });
+
+    // Intercept backend API conversation sync
+    await page.route('http://localhost:3010/api/v1/conversations/sync', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'synchronized' }),
+      });
+    });
     
     // 2. Intercept backend API context retrieval fetch call from content.js
     await page.route('http://localhost:3010/api/v1/projects/proj-core-default/context', route => {
@@ -156,6 +165,15 @@ test.describe('OpenBowl Chrome Extension', () => {
         `,
       });
     });
+
+    // Intercept backend API conversation sync
+    await page.route('http://localhost:3010/api/v1/conversations/sync', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'synchronized' }),
+      });
+    });
     
     // 2. Intercept backend API context retrieval fetch call
     await page.route('http://localhost:3010/api/v1/projects/proj-core-default/context', route => {
@@ -183,6 +201,71 @@ test.describe('OpenBowl Chrome Extension', () => {
     // 6. Assert insertion into contenteditable element
     await expect(inputDiv).toContainText('### OpenBowl Claude Context');
     await expect(inputDiv).toContainText('- Active Task: Claude Test');
+  });
+
+  test('should scrape messages from ChatGPT page and sync them to backend', async ({ context, extensionId }) => {
+    const page = await context.newPage();
+    page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+
+    // 1. Serve a mock ChatGPT page with user and assistant conversation turns
+    await page.route('https://chatgpt.com/', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: `
+          <!DOCTYPE html>
+          <html>
+          <head><title>Mock ChatGPT</title></head>
+          <body>
+            <div data-message-author-role="user">
+              <div class="whitespace-pre-wrap">Hello AI, what is the weather in Goa?</div>
+            </div>
+            <div data-message-author-role="assistant">
+              <div class="markdown">Hello user, it is sunny in Goa.</div>
+            </div>
+            <textarea id="prompt-textarea"></textarea>
+          </body>
+          </html>
+        `,
+      });
+    });
+
+    // 2. Capture and mock the conversation sync POST request
+    let syncPayload = null;
+    await page.route('http://localhost:3010/api/v1/conversations/sync', route => {
+      syncPayload = route.request().postDataJSON();
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'synchronized', message_count: 2 }),
+      });
+    });
+
+    // 3. Mock the context retrieval API
+    await page.route('http://localhost:3010/api/v1/projects/proj-core-default/context', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          context_text: '### OpenBowl Context\n- Project: Core'
+        }),
+      });
+    });
+
+    // 4. Navigate and trigger context injection
+    await page.goto('https://chatgpt.com/');
+    await page.locator('text=🥣 Inject Context').click();
+
+    // Wait for context injection to complete (resolves async storage.local.get and fetch race condition)
+    await expect(page.locator('#prompt-textarea')).toHaveValue('### OpenBowl Context\n- Project: Core\n\n');
+
+    // 5. Assert the sync payload was correct and extracted user/assistant turns
+    expect(syncPayload).not.toBeNull();
+    expect(syncPayload.project_id).toBe('proj-core-default');
+    expect(syncPayload.messages).toEqual([
+      { role: 'user', content: 'Hello AI, what is the weather in Goa?' },
+      { role: 'assistant', content: 'Hello user, it is sunny in Goa.' }
+    ]);
   });
 
 });

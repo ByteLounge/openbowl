@@ -37,6 +37,21 @@
       const projID = res.projectId || 'proj-core-default';
       
       try {
+        // 1. Scrape conversation history from the page
+        const messages = scrapeMessages();
+        if (messages.length > 0) {
+          try {
+            await fetch('http://localhost:3010/api/v1/conversations/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ project_id: projID, messages }),
+            });
+          } catch (e) {
+            console.warn('Failed to sync conversation history to local server:', e);
+          }
+        }
+
+        // 2. Fetch compiled context (now containing synced message history)
         const response = await fetch(`http://localhost:3010/api/v1/projects/${projID}/context`);
         if (!response.ok) throw new Error();
         const data = await response.json();
@@ -77,6 +92,56 @@
   };
 
   document.body.appendChild(btn);
+
+  // Scrapes active chat dialogs from the webpage DOM
+  function scrapeMessages() {
+    const messages = [];
+    console.log('scrapeMessages invoked');
+
+    // ChatGPT Selector (standard MV3 chat turns)
+    const chatgptTurns = document.querySelectorAll('[data-message-author-role]');
+    console.log('chatgptTurns count:', chatgptTurns.length);
+    if (chatgptTurns.length > 0) {
+      chatgptTurns.forEach(el => {
+        const role = el.getAttribute('data-message-author-role');
+        const textEl = el.querySelector('.markdown') || el.querySelector('.whitespace-pre-wrap') || el;
+        const content = textEl.innerText || textEl.textContent || '';
+        console.log('Found turn:', role, 'Content snippet:', content.substring(0, 20));
+        if (content.trim() && (role === 'user' || role === 'assistant')) {
+          messages.push({ role, content: content.trim() });
+        }
+      });
+      return messages;
+    }
+
+    // Claude Selector (standard Claude AI message wraps)
+    const claudeTurns = document.querySelectorAll('div[data-testid="user-message"], .font-claude-message');
+    if (claudeTurns.length > 0) {
+      claudeTurns.forEach(el => {
+        let role = 'user';
+        if (el.classList.contains('font-claude-message')) {
+          role = 'assistant';
+        }
+        const content = el.innerText || el.textContent || '';
+        if (content.trim()) {
+          messages.push({ role, content: content.trim() });
+        }
+      });
+      return messages;
+    }
+
+    // Fallback Selector for custom local model runtimes
+    const genericTurns = document.querySelectorAll('.user-message, .assistant-message, .chat-message');
+    genericTurns.forEach(el => {
+      let role = el.classList.contains('assistant-message') ? 'assistant' : 'user';
+      const content = el.innerText || el.textContent || '';
+      if (content.trim()) {
+        messages.push({ role, content: content.trim() });
+      }
+    });
+
+    return messages;
+  }
 
   function showToast(message) {
     const toast = document.createElement('div');
