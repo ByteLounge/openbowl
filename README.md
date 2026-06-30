@@ -279,9 +279,7 @@ _Screenshot placeholder — Web app dashboard coming soon!_
 
 ### Browser Extension
 
-<!-- Screenshot -->
-
-_Screenshot placeholder — Popup UI coming soon!_
+![OpenBowl Extension Popup UI](docs/images/extension_popup.jpg)
 
 ### Context Viewer
 
@@ -326,6 +324,7 @@ We welcome contributions of all sizes! To maintain codebase quality:
 
 - 📄 **[CONTEXT_ENGINE.md](file:///D:/Projects/OpenBowl/docs/CONTEXT_ENGINE.md)**: Context engine mechanics & sliding window compaction.
 - 📄 **[openapi.yaml](file:///D:/Projects/OpenBowl/docs/openapi.yaml)**: OpenAPI/Swagger specification of local REST endpoints.
+- 📄 **[SECURITY.md](file:///D:/Projects/OpenBowl/docs/SECURITY.md)**: OpenBowl security standards, API credentials protection, and file permissions.
 - 📄 **[ARCHITECTURE.md](file:///D:/Projects/OpenBowl/docs/ARCHITECTURE.md)**: System design and Tauri integration.
 - 📄 **[API_DESIGN.md](file:///D:/Projects/OpenBowl/docs/API_DESIGN.md)**: REST interfaces and WebSocket event payloads.
 - 📄 **[DATA_MODEL.md](file:///D:/Projects/OpenBowl/docs/DATA_MODEL.md)**: Database schemas and indexing strategy.

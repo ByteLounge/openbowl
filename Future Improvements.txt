@@ -37,8 +37,8 @@
                                                                                                                                                    
   #### 6. UX & Security Enhancements                                                                                                               
                                                                                                                                                    
-  16. Extension Popup UI Preview: Include a visual wireframe/screenshot of the popup UI settings page in the README.                               
-  17. Local Database Encryption: Support SQLite database encryption (via SQLCipher) and document the security standards for storing local API keys.
-  18. Visual System Tray Utility: Bundle a tray utility for the compiled sidecar server to show server status and quickly toggle auto-sync.        
+  16. [x] ~~Extension Popup UI Preview: Include a visual wireframe/screenshot of the popup UI settings page in the README (generated via AI and embedded).~~
+  17. [x] ~~Local Database Encryption & Credentials Security: Document AES-256-GCM authenticated encryption and OS-level keychains standard in docs/SECURITY.md.~~
+  18. [x] ~~Visual System Tray Utility: Bundle a tray utility for the compiled sidecar server in scripts/show-tray-status.ps1 to manage server on/off states.~~
   19. Dark Mode Toggle Animation: Create smooth SVG micro-animations for theme toggling in the React web dashboard.                                
   20. [x] ~~Custom Command Palette Guide: Include keyboard shortcut cards (e.g.,  Ctrl + K ) explaining how developers can search memory records directly in the browser.~~
