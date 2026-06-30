@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  openbowl-server:
+    build:
+      context: .
+      dockerfile: packages/core/Dockerfile
+    container_name: openbowl-server
+    ports:
+      - "3010:3010"
+    volumes:
+      - openbowl-data:/app/data
+      - .:/app/workspace
+    environment:
+      - PORT=3010
+      - DATABASE_PATH=/app/data/openbowl.db
+      - WORKSPACE_DIR=/app/workspace
+      - GIN_MODE=release
+    restart: unless-stopped
+
+volumes:
+  openbowl-data:
+    driver: local

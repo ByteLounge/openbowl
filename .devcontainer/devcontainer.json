@@ -1,0 +1,35 @@
+{
+  "name": "OpenBowl Full-Stack Workspace",
+  "image": "mcr.microsoft.com/devcontainers/go:1-1.21-bullseye",
+
+  // Install Node.js for frontend development
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+
+  // Set default environment variables
+  "containerEnv": {
+    "PORT": "3010",
+    "DATABASE_PATH": "openbowl.db"
+  },
+
+  // Configure tool-specific settings
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-playwright.playwright"
+      ]
+    }
+  },
+
+  // Ports to forward locally
+  "forwardPorts": [3000, 3010],
+
+  // Run initial installation scripts on setup
+  "postCreateCommand": "npm install --prefix apps/web && go version && node --version"
+}

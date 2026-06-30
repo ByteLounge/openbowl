@@ -1,0 +1,41 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "OpenBowl Full-Stack Tour 🥣",
+  "steps": [
+    {
+      "file": "README.md",
+      "line": 1,
+      "description": "Welcome to OpenBowl! OpenBowl is the Universal Context Layer for AI models. This tour will guide you through the core components of our full-stack architecture."
+    },
+    {
+      "file": "packages/core/cmd/server/main.go",
+      "line": 43,
+      "description": "This is the server entrypoint of the Go core sidecar. It loads configurations, seeds the SQLite database, starts file-watching, and boots either the stdio MCP server or the Gin API server."
+    },
+    {
+      "file": "packages/core/pkg/db/db.go",
+      "line": 55,
+      "description": "OpenBowl is local-first. We initialize a WAL-enabled SQLite database holding workspaces, projects, tasks, memories, and message threads."
+    },
+    {
+      "file": "packages/core/pkg/mcp/mcp.go",
+      "line": 61,
+      "description": "This is the Model Context Protocol (MCP) server handler. It responds to stdio JSON-RPC 2.0 requests from Cursor or VS Code, exposing project details and memories directly to editor agents."
+    },
+    {
+      "file": "apps/extension/content.js",
+      "line": 4,
+      "description": "This is our Chrome extension content script. It runs inside ChatGPT and Claude pages, injecting the 'Inject Context' button and setting up background auto-sync."
+    },
+    {
+      "file": "apps/extension/content.js",
+      "line": 139,
+      "description": "Every time the DOM changes (e.g., you write a prompt or the assistant responds), this MutationObserver debounces and sends the chat logs to the Go server backend, preserving context dynamically."
+    },
+    {
+      "file": "apps/extension/tests/extension.spec.js",
+      "line": 5,
+      "description": "Finally, we maintain high test reliability. This Playwright test suite launches Chromium pre-loaded with the extension, intercepts external domains, and asserts storage and DOM injection behaviors."
+    }
+  ]
+}
