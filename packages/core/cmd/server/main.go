@@ -17,6 +17,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/openbowl/openbowl/packages/core/pkg/db"
 	"github.com/openbowl/openbowl/packages/core/pkg/mcp"
+	"github.com/openbowl/openbowl/packages/core/pkg/memory"
+	"github.com/openbowl/openbowl/packages/core/pkg/models"
 	"github.com/openbowl/openbowl/packages/core/pkg/provider"
 	"github.com/openbowl/openbowl/packages/core/pkg/watcher"
 )
@@ -91,6 +93,11 @@ func main() {
 		fw.Start()
 		defer fw.Stop()
 	}
+
+	// Initialize and start Memory Engine background workers
+	memEngine := memory.NewMemoryEngine(database, nil)
+	memEngine.Start(2)
+	defer memEngine.Stop()
 
 	// Initialize Gin Router
 	r := gin.Default()
@@ -452,6 +459,19 @@ func main() {
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit sequence insertion: " + err.Error()})
 				return
+			}
+
+			// Queue user messages to background Memory Engine for fact & todo extraction
+			for i, msg := range input.Messages {
+				if msg.Role == "user" {
+					msgID := fmt.Sprintf("m-browser-sync-%s-%05d", input.ProjectID, i)
+					memEngine.QueueMessage(&models.Message{
+						ID:             msgID,
+						ConversationID: convID,
+						Role:           msg.Role,
+						Content:        msg.Content,
+					})
+				}
 			}
 
 			c.JSON(http.StatusOK, gin.H{"status": "synchronized", "message_count": len(input.Messages)})

@@ -291,8 +291,8 @@ OpenBowl implements a native **MCP JSON-RPC 2.0 stdio server** that allows IDEs 
 - [x] Desktop Application (Tauri Window Wrapper)
 - [x] Semantic Vector Search (Local cosine similarity embeddings)
 - [x] Multi-Device Cloud Syncing (CRDT outbox merges)
-- [ ] VS Code / Cursor IDE Extension
-- [ ] Background AI Fact & Todo Extraction agents
+- [x] VS Code / Cursor IDE Extension
+- [x] Background AI Fact & Todo Extraction agents
 
 ---
 

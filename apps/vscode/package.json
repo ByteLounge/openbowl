@@ -1,0 +1,50 @@
+{
+  "name": "openbowl-vscode",
+  "displayName": "OpenBowl: Universal Context Layer",
+  "description": "Inject local workspace decisions, tasks, and recent dialogue contexts directly into your active editors.",
+  "version": "0.1.0",
+  "publisher": "openbowl",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:openbowl.injectContext"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "openbowl.injectContext",
+        "title": "OpenBowl: Inject Workspace Context"
+      }
+    ],
+    "configuration": {
+      "title": "OpenBowl Settings",
+      "properties": {
+        "openbowl.sidecarUrl": {
+          "type": "string",
+          "default": "http://localhost:3010",
+          "description": "Local OpenBowl sidecar API URL."
+        },
+        "openbowl.projectId": {
+          "type": "string",
+          "default": "proj-core-default",
+          "description": "Active OpenBowl Project ID."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.0"
+  }
+}
