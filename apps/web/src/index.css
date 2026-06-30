@@ -28,6 +28,21 @@
   --sidebar-width: 260px;
 }
 
+body.light-theme {
+  --bg-primary: #f4f4f5;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  
+  --border-subtle: #e4e4e7;
+  --border-focus: #cbd5e1;
+  
+  --accent-purple-glow: rgba(139, 92, 246, 0.08);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -95,3 +110,44 @@ body {
 .btn-premium:active {
   transform: translateY(0);
 }
+
+/* Light Theme Container Overrides & Theme Toggle Styles */
+body.light-theme .app-container {
+  background: radial-gradient(circle at 50% -20%, #e0e7ff 0%, var(--bg-primary) 70%);
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.1) rotate(15deg);
+  background: var(--border-subtle);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-icon {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+}
+
+.theme-toggle-icon.sun {
+  animation: sun-glow 4s infinite alternate;
+}
+
+@keyframes sun-glow {
+  0% { filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.2)); }
+  100% { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6)); }
+}
+

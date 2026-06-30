@@ -8,6 +8,8 @@ import {
   Zap,
   Globe,
   Plus,
+  Sun,
+  Moon,
 } from "lucide-react";
 import {
   approximateTokens,
@@ -71,6 +73,20 @@ export default function App() {
   const [providers] = useState<Provider[]>(initialProviders);
   const [activeProviderIndex, setActiveProviderIndex] = useState(4); // Default to Ollama Local
   const [inputText, setInputText] = useState("");
+
+  const [theme, setTheme] = useState<"dark" | "light">(
+    (localStorage.getItem("theme") as "dark" | "light") || "dark",
+  );
+
+  useEffect(() => {
+    document.body.classList.remove("dark-theme", "light-theme");
+    document.body.classList.add(`${theme}-theme`);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
   // Real Local Database states
   const [, setWorkspaces] = useState<any[]>([]);
@@ -651,6 +667,26 @@ export default function App() {
               <Database size={14} color="var(--status-success)" />
               <span>Decisions: {memories.length}</span>
             </div>
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle-btn"
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              style={{ marginLeft: "4px" }}
+            >
+              {theme === "dark" ? (
+                <Sun
+                  size={15}
+                  className="theme-toggle-icon sun"
+                  color="#f59e0b"
+                />
+              ) : (
+                <Moon
+                  size={15}
+                  className="theme-toggle-icon moon"
+                  color="var(--accent-purple)"
+                />
+              )}
+            </button>
           </div>
         </header>
 
