@@ -329,7 +329,14 @@ func main() {
 			var exists bool
 			err = database.Conn.QueryRow(`SELECT EXISTS(SELECT 1 FROM conversations WHERE id = ?)`, convID).Scan(&exists)
 			if err == nil && exists {
-				mRows, err := database.Conn.Query(`SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY id ASC`, convID)
+				// Use a sliding window of the last 6 messages (3 turns) to keep the context size efficient and clean
+				mRows, err := database.Conn.Query(`
+					SELECT role, content FROM (
+						SELECT id, role, content FROM messages 
+						WHERE conversation_id = ? 
+						ORDER BY id DESC LIMIT 6
+					) ORDER BY id ASC
+				`, convID)
 				if err == nil {
 					defer mRows.Close()
 					var historyStr strings.Builder
