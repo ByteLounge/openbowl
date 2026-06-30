@@ -28,18 +28,18 @@ type ollamaMessage struct {
 }
 
 type ollamaRequest struct {
-	Model    string          `json:"model"`
-	Messages []ollamaMessage `json:"messages"`
+	Model    string                 `json:"model"`
+	Messages []ollamaMessage        `json:"messages"`
 	Options  map[string]interface{} `json:"options,omitempty"`
-	Stream   bool            `json:"stream"`
+	Stream   bool                   `json:"stream"`
 }
 
 type ollamaResponse struct {
-	Model     string        `json:"model"`
-	Message   ollamaMessage `json:"message"`
-	Done      bool          `json:"done"`
-	PromptEvalCount int     `json:"prompt_eval_count"`
-	EvalCount       int     `json:"eval_count"`
+	Model           string        `json:"model"`
+	Message         ollamaMessage `json:"message"`
+	Done            bool          `json:"done"`
+	PromptEvalCount int           `json:"prompt_eval_count"`
+	EvalCount       int           `json:"eval_count"`
 }
 
 func (p *OllamaProvider) getURL(req *CompletionRequest) string {

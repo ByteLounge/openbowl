@@ -495,7 +495,7 @@ func handleChatStreaming(conn *websocket.Conn, req *ChatStartPayload) {
 	}
 
 	streamChan := make(chan *provider.StreamChunk)
-	
+
 	// Create context with standard timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()

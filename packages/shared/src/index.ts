@@ -15,7 +15,7 @@ export function approximateTokens(text: string): number {
  * Formats token usage costs into a human-readable string.
  */
 export function formatCost(amount: number): string {
-  if (amount === 0) return '$0.00';
+  if (amount === 0) return "$0.00";
   if (amount < 0.01) return `$${amount.toFixed(5)}`;
   return `$${amount.toFixed(2)}`;
 }
@@ -27,10 +27,10 @@ export function formatDate(isoString: string): string {
   try {
     const d = new Date(isoString);
     return d.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   } catch {
     return isoString;

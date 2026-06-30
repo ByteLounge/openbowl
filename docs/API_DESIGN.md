@@ -1,6 +1,7 @@
 # API Design & Protocol Specification - OpenBowl
 
 OpenBowl components communicate using three primary channels:
+
 1. **REST APIs (HTTP/JSON)**: Used for CRUD operations on workspaces, projects, tasks, and settings. Managed by Go (Gin).
 2. **WebSocket Interface**: Used for streaming completions, real-time sync events, and terminal-like execution updates.
 3. **gRPC Services**: Used for high-speed inter-process communication (CLI to Core Engine, background workers to Provider SDK).
@@ -13,24 +14,28 @@ OpenBowl components communicate using three primary channels:
 Base URL: `http://localhost:3010/api/v1`
 
 ### Workspaces
-* `GET /workspaces` - Retrieve all workspaces.
-* `POST /workspaces` - Create a new workspace.
-* `GET /workspaces/:id/sync/status` - Get sync status and sequence number.
+
+- `GET /workspaces` - Retrieve all workspaces.
+- `POST /workspaces` - Create a new workspace.
+- `GET /workspaces/:id/sync/status` - Get sync status and sequence number.
 
 ### Projects & Files
-* `GET /projects?workspace_id=:id` - Retrieve projects in a workspace.
-* `POST /projects` - Create a project.
-* `POST /projects/:id/files` - Register/update file reference pointers (paths, hashes).
+
+- `GET /projects?workspace_id=:id` - Retrieve projects in a workspace.
+- `POST /projects` - Create a project.
+- `POST /projects/:id/files` - Register/update file reference pointers (paths, hashes).
 
 ### Tasks
-* `GET /projects/:id/tasks` - Retrieve tasks.
-* `POST /projects/:id/tasks` - Create a task.
-* `PATCH /tasks/:id` - Update status, title, description, or due date.
+
+- `GET /projects/:id/tasks` - Retrieve tasks.
+- `POST /projects/:id/tasks` - Create a task.
+- `PATCH /tasks/:id` - Update status, title, description, or due date.
 
 ### Memories
-* `GET /workspaces/:id/memories` - Retrieve extracted memories. Filterable by category, tags, or search query.
-* `POST /workspaces/:id/memories` - Manually record a memory.
-* `PATCH /memories/:id` - Edit memory content or toggle active status.
+
+- `GET /workspaces/:id/memories` - Retrieve extracted memories. Filterable by category, tags, or search query.
+- `POST /workspaces/:id/memories` - Manually record a memory.
+- `PATCH /memories/:id` - Edit memory content or toggle active status.
 
 ---
 
@@ -41,6 +46,7 @@ All chat sessions and LLM generations use a WebSocket channel for bi-directional
 ### Client-to-Server Messages
 
 #### Start Generation (`chat.start`)
+
 ```json
 {
   "event": "chat.start",
@@ -58,6 +64,7 @@ All chat sessions and LLM generations use a WebSocket channel for bi-directional
 ```
 
 #### Cancel Generation (`chat.cancel`)
+
 ```json
 {
   "event": "chat.cancel",
@@ -72,6 +79,7 @@ All chat sessions and LLM generations use a WebSocket channel for bi-directional
 ### Server-to-Client Messages
 
 #### Stream Chunk (`chat.chunk`)
+
 ```json
 {
   "event": "chat.chunk",
@@ -84,6 +92,7 @@ All chat sessions and LLM generations use a WebSocket channel for bi-directional
 ```
 
 #### Message Complete (`chat.complete`)
+
 ```json
 {
   "event": "chat.complete",
@@ -98,7 +107,9 @@ All chat sessions and LLM generations use a WebSocket channel for bi-directional
 ```
 
 #### Memory Extracted Notification (`memory.extracted`)
+
 Sent to UI when the background parser identifies a new decision or fact.
+
 ```json
 {
   "event": "memory.extracted",
@@ -203,9 +214,11 @@ message OptimizeContextResponse {
 OpenBowl implements the standard **Model Context Protocol** JSON-RPC 2.0 schema over stdio.
 
 ### 4.1 Exposed Tools (OpenBowl as MCP Server)
-* `list_workspace_memories`: Retrieve active decisions/facts.
-* `get_active_tasks`: Get project tasks and state.
-* `get_context_summary`: Produce a serialized context string for a given project.
+
+- `list_workspace_memories`: Retrieve active decisions/facts.
+- `get_active_tasks`: Get project tasks and state.
+- `get_context_summary`: Produce a serialized context string for a given project.
 
 ### 4.2 Embedded Clients (OpenBowl as MCP Client)
+
 OpenBowl connects to configured external MCP servers. The frontend displays active MCP connections in a status bar, letting the user toggle permission levels for external tools.

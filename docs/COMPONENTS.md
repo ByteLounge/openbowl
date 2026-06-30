@@ -81,33 +81,35 @@ App
 We separate local UI state (transient, layout-based) from cached DB resources (managed via TanStack Query).
 
 ### 3.1 Workspace Store (`useWorkspaceStore`)
-* `activeWorkspaceId`: `string`
-* `activeProjectId`: `string | null`
-* `activeConversationId`: `string | null`
-* `isSidebarExpanded`: `boolean`
-* `setActiveWorkspace(id: string)`: `void`
-* `setActiveProject(id: string | null)`: `void`
-* `setActiveConversation(id: string | null)`: `void`
+
+- `activeWorkspaceId`: `string`
+- `activeProjectId`: `string | null`
+- `activeConversationId`: `string | null`
+- `isSidebarExpanded`: `boolean`
+- `setActiveWorkspace(id: string)`: `void`
+- `setActiveProject(id: string | null)`: `void`
+- `setActiveConversation(id: string | null)`: `void`
 
 ### 3.2 Chat Generation Store (`useChatStore`)
-* `generatingConversations`: `Record<string, boolean>` (Tracks which conversations are currently streaming)
-* `abortedRequests`: `Record<string, boolean>`
-* `startGeneration(convId: string)`: `void`
-* `abortGeneration(convId: string)`: `void`
+
+- `generatingConversations`: `Record<string, boolean>` (Tracks which conversations are currently streaming)
+- `abortedRequests`: `Record<string, boolean>`
+- `startGeneration(convId: string)`: `void`
+- `abortGeneration(convId: string)`: `void`
 
 ---
 
 ## 4. UI Library & Theming Design Tokens
 
-* **Engine**: Tailwind CSS + `shadcn/ui` primitive components.
-* **Palette (Dark Mode Preferred)**:
-  * `--background`: `240 10% 3.9%` (Deep carbon black)
-  * `--card`: `240 10% 6%` (Subtle dark card background)
-  * `--primary`: `263.4 70% 50.4%` (Electric violet)
-  * `--accent`: `240 3.7% 15.9%` (Muted border/hover highlights)
-  * `--font-sans`: `Inter, system-ui, sans-serif`
-  * `--font-mono`: `Geist Mono, JetBrains Mono, monospace`
-* **Micro-Animations**:
-  * Hover transitions: `transition-all duration-200 ease-in-out`
-  * Command palette fade-in: `animate-in fade-in-80 zoom-in-95 duration-100`
-  * Streaming cursor: `after:content-['▋'] after:animate-pulse after:ml-0.5`
+- **Engine**: Tailwind CSS + `shadcn/ui` primitive components.
+- **Palette (Dark Mode Preferred)**:
+  - `--background`: `240 10% 3.9%` (Deep carbon black)
+  - `--card`: `240 10% 6%` (Subtle dark card background)
+  - `--primary`: `263.4 70% 50.4%` (Electric violet)
+  - `--accent`: `240 3.7% 15.9%` (Muted border/hover highlights)
+  - `--font-sans`: `Inter, system-ui, sans-serif`
+  - `--font-mono`: `Geist Mono, JetBrains Mono, monospace`
+- **Micro-Animations**:
+  - Hover transitions: `transition-all duration-200 ease-in-out`
+  - Command palette fade-in: `animate-in fade-in-80 zoom-in-95 duration-100`
+  - Streaming cursor: `after:content-['▋'] after:animate-pulse after:ml-0.5`

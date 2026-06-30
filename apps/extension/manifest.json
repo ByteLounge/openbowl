@@ -3,22 +3,14 @@
   "name": "OpenBowl Context Injector",
   "version": "0.1.0",
   "description": "Automatically injects OpenBowl workspace memory and task contexts into ChatGPT and Claude.",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
-  "host_permissions": [
-    "http://localhost:3010/*"
-  ],
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["http://localhost:3010/*"],
   "action": {
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://chatgpt.com/*",
-        "https://claude.ai/*"
-      ],
+      "matches": ["https://chatgpt.com/*", "https://claude.ai/*"],
       "js": ["content.js"],
       "run_at": "document_end"
     }

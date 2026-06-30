@@ -59,7 +59,7 @@ func TestMCPCallListTasks(t *testing.T) {
 	projID := "proj-mcp-tasks"
 	_, _ = database.Conn.Exec(`INSERT INTO workspaces (id, name) VALUES (?, ?)`, wsID, "Workspace")
 	_, _ = database.Conn.Exec(`INSERT INTO projects (id, workspace_id, name) VALUES (?, ?, ?)`, projID, wsID, "Project")
-	
+
 	// Seed task
 	_, _ = database.Conn.Exec(`
 		INSERT INTO tasks (id, project_id, title, status) 

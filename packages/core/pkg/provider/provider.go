@@ -6,7 +6,7 @@ import (
 
 // Message is the unified structure for LLM conversation logs
 type Message struct {
-	Role    string `json:"role"`    // "system", "user", "assistant"
+	Role    string `json:"role"` // "system", "user", "assistant"
 	Content string `json:"content"`
 }
 

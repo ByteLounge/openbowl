@@ -175,9 +175,9 @@ func (fw *FileWatcher) shouldIgnore(path string) bool {
 		".git", ".gemini", ".agents", "brain", ".system_generated",
 	}
 	for _, dir := range ignoredDirs {
-		if strings.Contains(path, string(filepath.Separator)+dir+string(filepath.Separator)) || 
-		   strings.HasSuffix(path, string(filepath.Separator)+dir) || 
-		   strings.HasPrefix(path, dir+string(filepath.Separator)) {
+		if strings.Contains(path, string(filepath.Separator)+dir+string(filepath.Separator)) ||
+			strings.HasSuffix(path, string(filepath.Separator)+dir) ||
+			strings.HasPrefix(path, dir+string(filepath.Separator)) {
 			return true
 		}
 	}

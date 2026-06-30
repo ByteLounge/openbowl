@@ -8,11 +8,11 @@ Thank you for your interest in contributing to OpenBowl! We are building the uni
 
 To build and run OpenBowl locally, you need the following tools installed on your development machine:
 
-* **Node.js** (v18.x or later)
-* **pnpm** (v8.x or later) - Monorepo package manager
-* **Go** (v1.21 or later) - Local backend engine
-* **Rust & Cargo** (Latest stable) - Needed for compiling Tauri desktop bindings
-* **Protobuf Compiler** (`protoc`) - Optional, required if you modify gRPC definitions
+- **Node.js** (v18.x or later)
+- **pnpm** (v8.x or later) - Monorepo package manager
+- **Go** (v1.21 or later) - Local backend engine
+- **Rust & Cargo** (Latest stable) - Needed for compiling Tauri desktop bindings
+- **Protobuf Compiler** (`protoc`) - Optional, required if you modify gRPC definitions
 
 ---
 
@@ -42,19 +42,24 @@ openbowl/
 Follow these steps to set up the development environment:
 
 ### Step 1: Install frontend dependencies
+
 ```bash
 pnpm install
 ```
 
 ### Step 2: Set up local backend configurations
+
 Navigate to `packages/core/` and set up the default local environment:
+
 ```bash
 cd packages/core
 cp .env.example .env
 ```
 
 ### Step 3: Run the application in development mode
+
 Run the development command from the root of the project. This starts the React dev server and triggers Tauri to compile and run the Go backend sidecar:
+
 ```bash
 pnpm dev
 ```
@@ -63,12 +68,12 @@ pnpm dev
 
 ## 4. Code & Quality Standards
 
-* **Strict TypeScript**: We do not allow `any` typings. Ensure all interfaces, props, and states are strictly typed.
-* **Go Coding Style**: All Go files must pass `golangci-lint` checkups. Ensure error propagation is handled cleanly (never suppress errors).
-* **Interface-Driven Design**: Before writing concrete database models or API clients, declare their interfaces in domain packages. Use dependency injection to pass concrete implementations.
-* **Test Requirements**:
-  * Unit tests are required for any modifications in `packages/core` or `packages/types`.
-  * Run tests before submitting a Pull Request:
+- **Strict TypeScript**: We do not allow `any` typings. Ensure all interfaces, props, and states are strictly typed.
+- **Go Coding Style**: All Go files must pass `golangci-lint` checkups. Ensure error propagation is handled cleanly (never suppress errors).
+- **Interface-Driven Design**: Before writing concrete database models or API clients, declare their interfaces in domain packages. Use dependency injection to pass concrete implementations.
+- **Test Requirements**:
+  - Unit tests are required for any modifications in `packages/core` or `packages/types`.
+  - Run tests before submitting a Pull Request:
     ```bash
     pnpm test
     ```
@@ -78,9 +83,9 @@ pnpm dev
 ## 5. Branching & PR Guidelines
 
 1. **Branch Names**: Use descriptive prefixes:
-   * `feat/` for new features
-   * `fix/` for bug fixes
-   * `docs/` for documentation updates
-   * `refactor/` for code restructuring
+   - `feat/` for new features
+   - `fix/` for bug fixes
+   - `docs/` for documentation updates
+   - `refactor/` for code restructuring
 2. **Commit Messages**: Use structured commit names (e.g., `feat(context-engine): optimize budget allocation`).
 3. **Pull Requests**: Every PR must reference an existing Issue and pass all automated CI pipeline checks (linting, tests, build compilation) before review.

@@ -56,7 +56,7 @@ func TestLogMutationAndOutbox(t *testing.T) {
 		SELECT id, workspace_id, entity_type, entity_id, operation_type, payload, sequence_number
 		FROM sync_operations WHERE workspace_id = ?`, wsID).
 		Scan(&op.ID, &op.WorkspaceID, &op.EntityType, &op.EntityID, &op.OperationType, &op.Payload, &op.SequenceNumber)
-	
+
 	if err != nil {
 		t.Fatalf("Failed to query outbox: %v", err)
 	}

@@ -77,7 +77,7 @@ func (me *MemoryEngine) worker(id int) {
 				log.Printf("[Memory Worker %d] Extraction error for message %s: %v", id, msg.ID, err)
 				continue
 			}
-			
+
 			// Save extracted memories to database
 			for _, m := range memories {
 				err := me.SaveMemory(&m)
@@ -268,7 +268,7 @@ func (me *MemoryEngine) Search(workspaceID string, query string, category string
 		SELECT id, workspace_id, category, content, COALESCE(source_conversation_id, ''), COALESCE(source_message_id, ''), is_active, created_at, updated_at
 		FROM memories 
 		WHERE workspace_id = ? AND is_active = 1`)
-	
+
 	params = append(params, workspaceID)
 
 	if query != "" {

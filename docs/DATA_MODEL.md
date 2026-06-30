@@ -139,21 +139,25 @@ CREATE TABLE sync_operations (
 ## 2. Text & Vector Search Schemas
 
 ### 2.1 Full-Text Search (FTS5) Table
+
 For rapid search of chat logs and memory content, we shadow our messages and memories using SQLite's FTS5 engine:
 
 ```sql
 CREATE VIRTUAL TABLE fts_idx USING fts5(
-    entity_id, 
-    entity_type, 
-    content, 
+    entity_id,
+    entity_type,
+    content,
     title,
     tokenize='porter unicode61'
 );
 ```
+
 FTS index updates are triggered automatically via SQL triggers on the `messages` and `memories` tables.
 
 ### 2.2 Semantic (Vector) Schema
+
 If `sqlite-vss` is used, the vector store is modeled as:
+
 ```sql
 CREATE VIRTUAL TABLE vss_memories USING vss0(
     memory_id,
@@ -168,6 +172,7 @@ If vector extensions are unavailable (dependent on platform/compilation), OpenBo
 ## 3. Data Merging & Sync Protocol
 
 To achieve conflict-free sync, the cloud backend maintains a central sequence number for each workspace.
+
 1. Each mutation triggers a `sync_operations` entry.
 2. The local database assigns a local chronological `sequence_number`.
 3. When pushing, the local client sends all unsynced operations ordered by sequence.

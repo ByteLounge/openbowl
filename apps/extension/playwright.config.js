@@ -1,7 +1,7 @@
-const { defineConfig } = require('@playwright/test');
+const { defineConfig } = require("@playwright/test");
 
 module.exports = defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
   timeout: 30000,
   expect: {
     timeout: 5000,
@@ -13,9 +13,9 @@ module.exports = defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: "chromium",
       use: {
-        browserName: 'chromium',
+        browserName: "chromium",
       },
     },
   ],

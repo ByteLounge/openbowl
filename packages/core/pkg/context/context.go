@@ -102,7 +102,7 @@ func (ce *ContextEngine) Assemble(req *AssembleRequest) (*ContextPackage, error)
 	mRows, err := ce.DB.Conn.Query(`
 		SELECT id, conversation_id, role, content, tokens_prompt, tokens_completion, cost, status, created_at
 		FROM messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 15`, req.ConversationID)
-	
+
 	rawMessages := make([]models.Message, 0)
 	if err == nil {
 		defer mRows.Close()
@@ -143,7 +143,7 @@ func (ce *ContextEngine) Assemble(req *AssembleRequest) (*ContextPackage, error)
 			decSb.WriteString(fmt.Sprintf("- [%s]: %s\n", m.Category, m.Content))
 		}
 		decSb.WriteString("\n")
-		
+
 		decTokens := charCountToTokens(decSb.Len())
 		if currentTokens+decTokens < req.TokenBudget/4 { // Allocate up to 25% of budget
 			sb.WriteString(decSb.String())
@@ -185,7 +185,7 @@ func (ce *ContextEngine) Assemble(req *AssembleRequest) (*ContextPackage, error)
 			// Restrict file injection to prevent overflow
 			fileHeader := fmt.Sprintf("File: %s\n```\n", filepath.Base(f.RelativePath))
 			fileFooter := "\n```\n\n"
-			
+
 			fileTokens := charCountToTokens(len(fileHeader) + len(content) + len(fileFooter))
 
 			// If file exceeds local budget, truncate it
@@ -219,7 +219,7 @@ func (ce *ContextEngine) Assemble(req *AssembleRequest) (*ContextPackage, error)
 		} else {
 			history = history[1:]
 		}
-		
+
 		// Recalculate history tokens
 		historyTokens = 0
 		for _, h := range history {

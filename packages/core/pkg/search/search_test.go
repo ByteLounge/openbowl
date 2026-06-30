@@ -9,7 +9,7 @@ import (
 func TestCosineSimilarity(t *testing.T) {
 	vecA := []float32{1.0, 2.0, 3.0}
 	vecB := []float32{1.0, 2.0, 3.0}
-	
+
 	score := CosineSimilarity(vecA, vecB)
 	if score < 0.99 || score > 1.01 {
 		t.Errorf("Expected similarity 1.0 for identical vectors, got %f", score)
@@ -40,7 +40,7 @@ func TestSearchMemoriesSemantic(t *testing.T) {
 	if _, err := database.Conn.Exec(`INSERT INTO workspaces (id, name) VALUES (?, ?)`, wsID, "Workspace"); err != nil {
 		t.Fatalf("Workspace insert failed: %v", err)
 	}
-	
+
 	if _, err := database.Conn.Exec(`
 		INSERT INTO memories (id, workspace_id, category, content, is_active) 
 		VALUES (?, ?, ?, ?, ?)`, "m-search-1", wsID, "decision", "SQLite DB format preferred", 1); err != nil {

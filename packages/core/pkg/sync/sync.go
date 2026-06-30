@@ -85,7 +85,7 @@ func LogMutation(tx *sql.Tx, workspaceID string, entityType string, entityID str
 		INSERT INTO sync_operations (workspace_id, entity_type, entity_id, operation_type, payload, sequence_number, applied_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		workspaceID, entityType, entityID, opType, string(payloadBytes), nextSeq, time.Now())
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to write sync outbox: %w", err)
 	}

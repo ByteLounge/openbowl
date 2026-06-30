@@ -57,7 +57,7 @@ func (mm *MigrationManager) ImportChatGPTBackup(projectID string, reader io.Read
 
 	for _, chat := range chatList {
 		convID := uuid.New().String()
-		
+
 		title := chat.Title
 		if title == "" {
 			title = "Imported ChatGPT Chat"

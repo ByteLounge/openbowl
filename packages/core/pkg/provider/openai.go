@@ -28,8 +28,8 @@ type openAIChoice struct {
 }
 
 type openAIDeltaChoice struct {
-	Index        int `json:"index"`
-	Delta        struct {
+	Index int `json:"index"`
+	Delta struct {
 		Role    string `json:"role"`
 		Content string `json:"content"`
 	} `json:"delta"`
@@ -118,7 +118,7 @@ func (p *OpenAIProvider) Completion(ctx context.Context, req *CompletionRequest)
 
 	tokensPrompt := apiResp.Usage.PromptTokens
 	tokensCompletion := apiResp.Usage.CompletionTokens
-	
+
 	// If API doesn't return usage (e.g. some local endpoints), estimate it
 	if tokensPrompt == 0 {
 		for _, m := range req.Messages {
