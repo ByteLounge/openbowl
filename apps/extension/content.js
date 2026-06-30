@@ -1,9 +1,10 @@
 // OpenBowl Chrome Extension Content Script
-// Injects compiled workspace contexts into ChatGPT and Claude inputs.
+// Injects compiled workspace contexts and automatically syncs conversations.
 
 (function() {
   // Create floating Injector Button
   const btn = document.createElement('button');
+  btn.id = 'openbowl-btn';
   btn.innerHTML = '🥣 Inject Context';
   btn.style.position = 'fixed';
   btn.style.bottom = '20px';
@@ -37,29 +38,16 @@
       const projID = res.projectId || 'proj-core-default';
       
       try {
-        // 1. Scrape conversation history from the page
-        const messages = scrapeMessages();
-        if (messages.length > 0) {
-          try {
-            await fetch('http://localhost:3010/api/v1/conversations/sync', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ project_id: projID, messages }),
-            });
-          } catch (e) {
-            console.warn('Failed to sync conversation history to local server:', e);
-          }
-        }
+        // 1. Force a manual sync of the current page messages before fetching context
+        await forceSync(projID);
 
-        // 2. Fetch compiled context (now containing synced message history)
+        // 2. Fetch compiled context (now containing recently synced message history)
         const response = await fetch(`http://localhost:3010/api/v1/projects/${projID}/context`);
         if (!response.ok) throw new Error();
         const data = await response.json();
         const contextText = data.context_text;
 
         // Try to locate prompt box
-        // ChatGPT selector: '#prompt-textarea'
-        // Claude selector: 'div[contenteditable="true"]'
         let inputArea = document.querySelector('#prompt-textarea') || 
                         document.querySelector('div[contenteditable="true"]') ||
                         document.querySelector('textarea');
@@ -67,7 +55,6 @@
         if (inputArea) {
           if (inputArea.tagName === 'DIV') {
             // contenteditable element injection
-            const prevHtml = inputArea.innerHTML;
             inputArea.focus();
             document.execCommand('insertText', false, contextText + "\n\n");
           } else {
@@ -93,20 +80,21 @@
 
   document.body.appendChild(btn);
 
+  // Auto-sync state variables
+  let lastSyncedText = '';
+  let syncTimeout = null;
+
   // Scrapes active chat dialogs from the webpage DOM
   function scrapeMessages() {
     const messages = [];
-    console.log('scrapeMessages invoked');
 
-    // ChatGPT Selector (standard MV3 chat turns)
+    // 1. ChatGPT Selector (standard MV3 chat turns)
     const chatgptTurns = document.querySelectorAll('[data-message-author-role]');
-    console.log('chatgptTurns count:', chatgptTurns.length);
     if (chatgptTurns.length > 0) {
       chatgptTurns.forEach(el => {
         const role = el.getAttribute('data-message-author-role');
         const textEl = el.querySelector('.markdown') || el.querySelector('.whitespace-pre-wrap') || el;
         const content = textEl.innerText || textEl.textContent || '';
-        console.log('Found turn:', role, 'Content snippet:', content.substring(0, 20));
         if (content.trim() && (role === 'user' || role === 'assistant')) {
           messages.push({ role, content: content.trim() });
         }
@@ -114,12 +102,14 @@
       return messages;
     }
 
-    // Claude Selector (standard Claude AI message wraps)
-    const claudeTurns = document.querySelectorAll('div[data-testid="user-message"], .font-claude-message');
+    // 2. Claude Selector (both standard web and Playwright test selectors)
+    const claudeTurns = document.querySelectorAll('div[data-testid="user-message"], div[data-testid="assistant-message"], .font-claude-message, .claude-message');
     if (claudeTurns.length > 0) {
       claudeTurns.forEach(el => {
         let role = 'user';
-        if (el.classList.contains('font-claude-message')) {
+        if (el.classList.contains('font-claude-message') || 
+            el.classList.contains('claude-message') || 
+            el.getAttribute('data-testid') === 'assistant-message') {
           role = 'assistant';
         }
         const content = el.innerText || el.textContent || '';
@@ -130,7 +120,7 @@
       return messages;
     }
 
-    // Fallback Selector for custom local model runtimes
+    // 3. Fallback Selector for custom local model runtimes
     const genericTurns = document.querySelectorAll('.user-message, .assistant-message, .chat-message');
     genericTurns.forEach(el => {
       let role = el.classList.contains('assistant-message') ? 'assistant' : 'user';
@@ -143,8 +133,82 @@
     return messages;
   }
 
+  // Force synchronous push to backend database
+  async function forceSync(projID) {
+    const messages = scrapeMessages();
+    if (messages.length === 0) return;
+    
+    const serialized = JSON.stringify(messages);
+    try {
+      await fetch('http://localhost:3010/api/v1/conversations/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projID, messages }),
+      });
+      lastSyncedText = serialized;
+    } catch (e) {
+      console.warn('OpenBowl: Manual sync failed', e);
+    }
+  }
+
+  // Automatically sends messages in background as you chat
+  async function autoSync() {
+    chrome.storage.local.get(['projectId'], async (res) => {
+      const projID = res.projectId || 'proj-core-default';
+      const messages = scrapeMessages();
+      if (messages.length === 0) return;
+
+      const serialized = JSON.stringify(messages);
+      if (serialized === lastSyncedText) return; // Already synchronized
+
+      try {
+        await fetch('http://localhost:3010/api/v1/conversations/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: projID, messages }),
+        });
+        lastSyncedText = serialized;
+        console.log('OpenBowl: Conversation auto-synced successfully');
+      } catch (e) {
+        console.warn('OpenBowl: Background auto-sync failed', e);
+      }
+    });
+  }
+
+  // Listens to DOM changes to trigger background sync when messages are added
+  function setupAutoSync() {
+    const debouncedSync = () => {
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(autoSync, 2000); // Trigger 2 seconds after user/assistant stops typing
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      let shouldTrigger = false;
+      for (const mutation of mutations) {
+        // Skip mutations caused by the extension UI itself
+        if (mutation.target.closest && 
+           (mutation.target.closest('#openbowl-btn') || mutation.target.closest('.openbowl-toast'))) {
+          continue;
+        }
+        shouldTrigger = true;
+      }
+      if (shouldTrigger) {
+        debouncedSync();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  // Start background auto-sync observer
+  setupAutoSync();
+
   function showToast(message) {
     const toast = document.createElement('div');
+    toast.className = 'openbowl-toast';
     toast.innerHTML = message;
     toast.style.position = 'fixed';
     toast.style.bottom = '80px';
