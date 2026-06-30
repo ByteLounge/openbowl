@@ -277,9 +277,7 @@ OpenBowl implements a native **MCP JSON-RPC 2.0 stdio server** that allows IDEs 
 
 ### Context Viewer
 
-<!-- Screenshot -->
-
-_Screenshot placeholder — Context compiler preview coming soon!_
+![OpenBowl Context Viewer](docs/images/context_viewer.jpg)
 
 ---
 
